@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "project",
-    "slug": "project",
+    "name": "aitomator",
+    "slug": "aitomator",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "project",
+    "scheme": "aitomator",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.supastishn.aitomator"
     },
     "web": {
       "bundler": "metro",
