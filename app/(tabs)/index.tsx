@@ -6,7 +6,33 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+import { useState } from 'react';
+import { View, Button, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
+import { AutomatorModule } from '../native';
+import { processScreenshot } from '@/services/aiProcessor';
+
 export default function HomeScreen() {
+  const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
+  const [status, requestPermission] = MediaLibrary.usePermissions();
+
+  const captureScreen = async () => {
+    if (!status?.granted) await requestPermission();
+    try {
+      const uri = await MediaLibrary.createAssetAsync('path/to/screenshot');
+      setScreenshotUri(uri);
+    } catch (error) {
+      console.error('Capture failed', error);
+    }
+  };
+
+  const runAutomation = async () => {
+    if (!screenshotUri) return;
+    const coordinates = await processScreenshot(screenshotUri);
+    for (const coord of coordinates) {
+      await AutomatorModule.performTouch(coord.x, coord.y);
+    }
+  };
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -56,6 +82,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  controls: { flexDirection: 'row', justifyContent: 'space-evenly' },
+  preview: { width: 200, height: 300 },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
