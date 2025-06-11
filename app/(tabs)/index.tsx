@@ -112,16 +112,26 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  controls: { flexDirection: 'row', justifyContent: 'space-evenly' },
-  preview: { width: 200, height: 300 },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  automationContainer: {
+    flex: 1,
+    padding: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  controls: {
+    flexDirection: 'row', 
+    justifyContent: 'space-evenly',
+    marginBottom: 20,
+  },
+  button: {
+    padding: 15,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+  },
+  preview: {
+    width: '100%',
+    height: 400,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
   },
   reactLogo: {
     height: 178,
