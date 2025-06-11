@@ -1,10 +1,12 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { View, TouchableOpacity } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
+import AutomatorModule from '@/native';
+import { processScreenshot } from '@/services/aiProcessor';
 
 import { useState } from 'react';
 import { View, Button, Image, TouchableOpacity, StyleSheet } from 'react-native';
@@ -13,6 +15,26 @@ import { AutomatorModule } from '../native';
 import { processScreenshot } from '@/services/aiProcessor';
 
 export default function HomeScreen() {
+  const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
+  const [status, requestPermission] = MediaLibrary.usePermissions();
+
+  const captureScreen = async () => {
+    if (!status?.granted) await requestPermission();
+    try {
+      const filePath = await AutomatorModule.takeScreenshot();
+      setScreenshotUri(filePath);
+    } catch (error) {
+      console.error('Capture failed', error);
+    }
+  };
+
+  const runAutomation = async () => {
+    if (!screenshotUri) return;
+    const coordinates = await processScreenshot(screenshotUri);
+    for (const coord of coordinates) {
+      await AutomatorModule.performTouch(coord.x, coord.y);
+    }
+  };
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [status, requestPermission] = MediaLibrary.usePermissions();
 
@@ -62,41 +84,29 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <View style={styles.automationContainer}>
+        <View style={styles.controls}>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={captureScreen}>
+            <ThemedText>Capture Screen</ThemedText>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={runAutomation}
+            disabled={!screenshotUri}>
+            <ThemedText>Run Automation</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        {screenshotUri && (
+          <Image 
+            source={{ uri: `file://${screenshotUri}` }} 
+            style={styles.preview} 
+          />
+        )}
+      </View>
     </ParallaxScrollView>
   );
 }
