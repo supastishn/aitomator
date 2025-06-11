@@ -61,6 +61,7 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
+  implementation 'com.github.react-native-community:react-native-cameraroll:1.0.0'
 }
 
 /**

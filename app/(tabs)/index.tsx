@@ -42,6 +42,26 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
+      <View style={styles.controls}>
+        <TouchableOpacity onPress={captureScreen}>
+          <ThemedText>Capture Screen</ThemedText>
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={runAutomation}>
+          <ThemedText>Run Automation</ThemedText> 
+        </TouchableOpacity>
+      </View>
+
+      {screenshotUri && (
+        <Image source={{uri: screenshotUri}} style={styles.preview} />
+      )}
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
