@@ -1,28 +1,53 @@
 import { Image } from 'expo-image';
-import { StyleSheet } from 'react-native';
-
+import { StyleSheet, Alert, Linking } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { View, TouchableOpacity } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import AutomatorModule from '@/native';
 import { processScreenshot } from '@/services/aiProcessor';
-
-import { useState } from 'react';
-import { View, Button, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import * as MediaLibrary from 'expo-media-library';
-import { AutomatorModule } from '../native';
-import { processScreenshot } from '@/services/aiProcessor';
+import { useEffect, useState } from 'react';
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [status, requestPermission] = MediaLibrary.usePermissions();
+  const [isAccessibilityEnabled, setIsAccessibilityEnabled] = useState(false);
+
+  useEffect(() => {
+    const checkAccessibility = async () => {
+      try {
+        const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
+        setIsAccessibilityEnabled(enabled);
+      } catch (error) {
+        console.error('Accessibility check failed', error);
+      }
+    };
+    checkAccessibility();
+  }, []);
+
+  const promptAccessibility = () => {
+    Alert.alert(
+      "Accessibility Permission Required",
+      "Please enable AI Automator in accessibility settings for touch automation",
+      [
+        {
+          text: "Open Settings",
+          onPress: () => Linking.openSettings()
+        },
+        { text: "Cancel", onPress: () => {} }
+      ]
+    );
+  };
 
   const captureScreen = async () => {
+    if (!isAccessibilityEnabled) {
+      promptAccessibility();
+      return;
+    }
     if (!status?.granted) await requestPermission();
     try {
       const filePath = await AutomatorModule.takeScreenshot();
-      setScreenshotUri(filePath);
+      setScreenshotUri(`file://${filePath}`);
     } catch (error) {
       console.error('Capture failed', error);
     }
@@ -35,48 +60,9 @@ export default function HomeScreen() {
       await AutomatorModule.performTouch(coord.x, coord.y);
     }
   };
-  const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  const [status, requestPermission] = MediaLibrary.usePermissions();
 
-  const captureScreen = async () => {
-    if (!status?.granted) await requestPermission();
-    try {
-      const uri = await MediaLibrary.createAssetAsync('path/to/screenshot');
-      setScreenshotUri(uri);
-    } catch (error) {
-      console.error('Capture failed', error);
-    }
-  };
-
-  const runAutomation = async () => {
-    if (!screenshotUri) return;
-    const coordinates = await processScreenshot(screenshotUri);
-    for (const coord of coordinates) {
-      await AutomatorModule.performTouch(coord.x, coord.y);
-    }
-  };
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <View style={styles.controls}>
-        <TouchableOpacity onPress={captureScreen}>
-          <ThemedText>Capture Screen</ThemedText>
-        </TouchableOpacity>
-        
-        <TouchableOpacity onPress={runAutomation}>
-          <ThemedText>Run Automation</ThemedText> 
-        </TouchableOpacity>
-      </View>
-
-      {screenshotUri && (
-        <Image source={{uri: screenshotUri}} style={styles.preview} />
-      )}
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
@@ -102,7 +88,7 @@ export default function HomeScreen() {
 
         {screenshotUri && (
           <Image 
-            source={{ uri: `file://${screenshotUri}` }} 
+            source={{ uri: screenshotUri }} 
             style={styles.preview} 
           />
         )}

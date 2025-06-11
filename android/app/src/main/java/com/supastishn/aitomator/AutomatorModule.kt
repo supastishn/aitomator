@@ -3,6 +3,7 @@ package com.supastishn.aitomator
 import android.graphics.Bitmap
 import android.os.Environment
 import android.util.Log
+import android.accessibilityservice.AccessibilityService
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -11,6 +12,9 @@ import java.io.File
 import java.io.FileOutputStream
 
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+
+    // Add to class variables
+    private lateinit var accessibilityService: AccessibilityService
 
     override fun getName() = "AutomatorModule"
 
@@ -38,8 +42,28 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
     @ReactMethod
     fun performTouch(x: Float, y: Float, promise: Promise) {
-        // Stub for now - requires AccessibilityService implementation
-        Log.d("Automator", "Touch simulation at ($x, $y)")
-        promise.resolve(true)
+        try {
+            val service = AutomatorService.getInstance()
+            service?.simulateTap(x, y)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("TOUCH_ERROR", e.message)
+        }
+    }
+
+    @ReactMethod
+    fun isAccessibilityServiceEnabled(promise: Promise) {
+        try {
+            val context = reactApplicationContext
+            val enabledServices = android.provider.Settings.Secure.getString(
+                context.contentResolver,
+                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+            val expectedService = "${context.packageName}/${AutomatorService::class.qualifiedName}"
+            val isEnabled = enabledServices?.contains(expectedService) == true
+            promise.resolve(isEnabled)
+        } catch (e: Exception) {
+            promise.reject("ACCESSIBILITY_CHECK_ERROR", e.message)
+        }
     }
 }
