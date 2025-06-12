@@ -20,8 +20,10 @@
       "package": "com.supastishn.aitomator",
       "permissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
-        "android.permission.BIND_ACCESSIBILITY_SERVICE"
-      ]
+        "android.permission.BIND_ACCESSIBILITY_SERVICE",
+        "android.permission.FOREGROUND_SERVICE"
+      ],
+      "newArchEnabled": true
     },
     "web": {
       "bundler": "metro",

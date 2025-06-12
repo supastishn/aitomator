@@ -44,8 +44,12 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun performTouch(x: Float, y: Float, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
-            service?.simulateTap(x, y)
-            promise.resolve(true)
+            if (service != null) {
+                service.simulateTap(x, y)
+                promise.resolve(true)
+            } else {
+                promise.reject("SERVICE_NOT_READY", "Accessibility service not initialized")
+            }
         } catch (e: Exception) {
             promise.reject("TOUCH_ERROR", e.message)
         }

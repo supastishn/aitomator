@@ -6,9 +6,11 @@ import { View, TouchableOpacity } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import AutomatorModule from '@/native';
 import { processScreenshot } from '@/services/aiProcessor';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import ViewShot from 'react-native-view-shot';
 
 export default function HomeScreen() {
+  const viewShotRef = useRef<any>(null);
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [status, requestPermission] = MediaLibrary.usePermissions();
   const [isAccessibilityEnabled, setIsAccessibilityEnabled] = useState(false);
@@ -44,10 +46,9 @@ export default function HomeScreen() {
       promptAccessibility();
       return;
     }
-    if (!status?.granted) await requestPermission();
     try {
-      const filePath = await AutomatorModule.takeScreenshot();
-      setScreenshotUri(`file://${filePath}`);
+      const result = await viewShotRef.current.capture();
+      setScreenshotUri(result);
     } catch (error) {
       console.error('Capture failed', error);
     }
@@ -70,29 +71,35 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
-      <View style={styles.automationContainer}>
-        <View style={styles.controls}>
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={captureScreen}>
-            <ThemedText>Capture Screen</ThemedText>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={runAutomation}
-            disabled={!screenshotUri}>
-            <ThemedText>Run Automation</ThemedText>
-          </TouchableOpacity>
-        </View>
+      <ViewShot
+        ref={viewShotRef}
+        options={{ format: 'png', result: 'data-uri' }}
+        style={StyleSheet.absoluteFillObject}
+      >
+        <View style={styles.automationContainer}>
+          <View style={styles.controls}>
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={captureScreen}>
+              <ThemedText>Capture Screen</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={runAutomation}
+              disabled={!screenshotUri}>
+              <ThemedText>Run Automation</ThemedText>
+            </TouchableOpacity>
+          </View>
 
-        {screenshotUri && (
-          <Image 
-            source={{ uri: screenshotUri }} 
-            style={styles.preview} 
-          />
-        )}
-      </View>
+          {screenshotUri && (
+            <Image 
+              source={{ uri: screenshotUri }} 
+              style={styles.preview} 
+            />
+          )}
+        </View>
+      </ViewShot>
     </ParallaxScrollView>
   );
 }
