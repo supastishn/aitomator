@@ -49,8 +49,8 @@ export default function HomeScreen() {
     }
 
     // Ensure permissions are granted
-    if (status?.status !== 'granted') {
-      const { status: newStatus } = await requestPermission();
+    if (status !== 'granted') {
+      const { status: newStatus } = await MediaLibrary.requestPermissionsAsync();
       if (newStatus !== 'granted') {
         Alert.alert(
           "Permission required",
