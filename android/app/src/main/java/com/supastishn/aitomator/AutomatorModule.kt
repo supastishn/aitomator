@@ -27,14 +27,15 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             rootView?.isDrawingCacheEnabled = false
 
             val filename = "screenshot_${System.currentTimeMillis()}.png"
-            val output = File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), filename)
-
-            FileOutputStream(output).use { out ->
+            val path = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES
+            ).absolutePath
+            val outputFile = File(path + File.separator + filename)
+            FileOutputStream(outputFile).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
-            promise.resolve(output.absolutePath)
-            Log.d("Automator", "Screenshot saved to ${output.absolutePath}")
+            promise.resolve(outputFile.absolutePath)
+            Log.d("Automator", "Screenshot saved to ${outputFile.absolutePath}")
         } catch (e: Exception) {
             promise.reject("SCREENSHOT_ERROR", e.message)
         }

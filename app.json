@@ -21,7 +21,8 @@
       "permissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.BIND_ACCESSIBILITY_SERVICE",
-        "android.permission.FOREGROUND_SERVICE"
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "newArchEnabled": true
     },

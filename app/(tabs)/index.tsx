@@ -42,10 +42,24 @@ export default function HomeScreen() {
   };
 
   const captureScreen = async () => {
+    // Ensure accessibility is enabled
     if (!isAccessibilityEnabled) {
       promptAccessibility();
       return;
     }
+
+    // Ensure permissions are granted
+    if (status?.status !== 'granted') {
+      const { status: newStatus } = await requestPermission();
+      if (newStatus !== 'granted') {
+        Alert.alert(
+          "Permission required",
+          "We need media permission to save screenshots"
+        );
+        return;
+      }
+    }
+
     try {
       const result = await viewShotRef.current.capture();
       setScreenshotUri(result);
