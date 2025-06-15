@@ -1,6 +1,6 @@
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import HomeScreen from '@/app/(tabs)/index';
-import AutomatorModule from '@/native';
+import AutomatorModule from '@/app/native';
 import { processScreenshot } from '@/services/aiProcessor';
 
 jest.mock('@/native', () => ({

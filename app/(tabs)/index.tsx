@@ -4,7 +4,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { View, TouchableOpacity } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
-import AutomatorModule from '@/native';
+import AutomatorModule from '@/app/native';
 import { processScreenshot } from '@/services/aiProcessor';
 import { useEffect, useState, useRef } from 'react';
 import ViewShot from 'react-native-view-shot';

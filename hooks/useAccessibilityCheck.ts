@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Linking } from 'react-native';
-import AutomatorModule from '@/native';
+import AutomatorModule from '@/app/native';
 
 export default function useAccessibilityCheck() {
   const [isEnabled, setIsEnabled] = useState(false);
