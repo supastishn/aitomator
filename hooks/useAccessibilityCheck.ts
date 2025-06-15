@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Linking } from 'react-native';
-import AutomatorModule from '@/app/native';
+import AutomatorModule from '@/lib/native';
 
 export default function useAccessibilityCheck() {
   const [isEnabled, setIsEnabled] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const checkService = async () => {
       try {
-        const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
-        setIsEnabled(enabled);
+        if (AutomatorModule && typeof AutomatorModule.isAccessibilityServiceEnabled === 'function') {
+          const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
+          setIsEnabled(enabled);
+        } else {
+          console.warn('AutomatorModule not ready for accessibility check');
+        }
       } catch (error) {
         console.error('Accessibility check failed', error);
+      } finally {
+        setIsReady(true);
       }
     };
     checkService();
   }, []);
 
-  return isEnabled;
+  return { isEnabled, isReady };
 }

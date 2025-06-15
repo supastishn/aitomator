@@ -4,28 +4,17 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { View, TouchableOpacity } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
-import AutomatorModule from '@/app/native';
+import AutomatorModule from '@/lib/native';
 import { processScreenshot } from '@/services/aiProcessor';
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import ViewShot from 'react-native-view-shot';
+import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 
 export default function HomeScreen() {
   const viewShotRef = useRef<any>(null);
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [status, requestPermission] = MediaLibrary.usePermissions();
-  const [isAccessibilityEnabled, setIsAccessibilityEnabled] = useState(false);
-
-  useEffect(() => {
-    const checkAccessibility = async () => {
-      try {
-        const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
-        setIsAccessibilityEnabled(enabled);
-      } catch (error) {
-        console.error('Accessibility check failed', error);
-      }
-    };
-    checkAccessibility();
-  }, []);
+  const { isEnabled, isReady } = useAccessibilityCheck();
 
   const promptAccessibility = () => {
     Alert.alert(
@@ -36,19 +25,21 @@ export default function HomeScreen() {
           text: "Open Settings",
           onPress: () => Linking.openSettings()
         },
-        { text: "Cancel", onPress: () => {} }
+        { text: "Cancel" }
       ]
     );
   };
 
   const captureScreen = async () => {
-    // Ensure accessibility is enabled
-    if (!isAccessibilityEnabled) {
+    if (!isReady) {
+      Alert.alert("Service Initializing", "Please wait for the automation service to initialize");
+      return;
+    }
+    if (!isEnabled) {
       promptAccessibility();
       return;
     }
 
-    // Ensure permissions are granted
     if (status !== 'granted') {
       const { status: newStatus } = await MediaLibrary.requestPermissionsAsync();
       if (newStatus !== 'granted') {

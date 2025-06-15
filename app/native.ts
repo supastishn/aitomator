@@ -1,5 +1,3 @@
-import { NativeModules } from 'react-native';
-
-const { AutomatorModule } = NativeModules;
-
-export default AutomatorModule;
+throw new Error(
+  "Do not import from app/native.ts. Use '@/lib/native' instead."
+);
