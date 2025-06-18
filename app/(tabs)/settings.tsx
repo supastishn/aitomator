@@ -12,8 +12,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
-import { View } from 'react-native';
-import { Text } from 'react-native';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
