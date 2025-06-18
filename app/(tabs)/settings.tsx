@@ -148,19 +148,21 @@ export default function SettingsScreen() {
             <ThemedText type="defaultSemiBold" style={styles.label}>
               API Key *
             </ThemedText>
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { borderColor: '#687076' }]}>
               <TextInput
                 style={[
                   styles.input,
                   {
-                    color: Colors[colorScheme ?? 'light'].text,
-                    borderColor: Colors[colorScheme ?? 'light'].icon,
+                    color: '#11181C', // Fixed dark gray text
+                  },
+                  {
+                    borderColor: '#687076', // Fixed gray border
                   },
                 ]}
                 value={settings.apiKey}
                 onChangeText={(text) => setSettings({ ...settings, apiKey: text })}
                 placeholder="sk-..."
-                placeholderTextColor={Colors[colorScheme ?? 'light'].icon}
+                placeholderTextColor="#687076"
                 secureTextEntry={!showApiKey}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -188,14 +190,14 @@ export default function SettingsScreen() {
               style={[
                 styles.input,
                 {
-                  color: Colors[colorScheme ?? 'light'].text,
-                  borderColor: Colors[colorScheme ?? 'light'].icon,
+                  color: '#11181C',
                 },
+                { borderColor: '#687076' },
               ]}
               value={settings.baseUrl}
               onChangeText={(text) => setSettings({ ...settings, baseUrl: text })}
               placeholder="https://api.openai.com"
-              placeholderTextColor={Colors[colorScheme ?? 'light'].icon}
+              placeholderTextColor="#687076"
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
@@ -213,14 +215,14 @@ export default function SettingsScreen() {
               style={[
                 styles.input,
                 {
-                  color: Colors[colorScheme ?? 'light'].text,
-                  borderColor: Colors[colorScheme ?? 'light'].icon,
+                  color: '#11181C',
                 },
+                { borderColor: '#687076' },
               ]}
               value={settings.model}
               onChangeText={(text) => setSettings({ ...settings, model: text })}
               placeholder="gpt-4o"
-              placeholderTextColor={Colors[colorScheme ?? 'light'].icon}
+              placeholderTextColor="#687076"
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -234,7 +236,7 @@ export default function SettingsScreen() {
               style={[
                 styles.button,
                 styles.primaryButton,
-                { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+                { backgroundColor: '#0a7ea4' }, // Solid blue color
                 saving && styles.disabledButton,
               ]}
               onPress={handleSave}
@@ -252,14 +254,14 @@ export default function SettingsScreen() {
                 styles.button,
                 styles.secondaryButton,
                 {
-                  borderColor: Colors[colorScheme ?? 'light'].tint,
+                  borderColor: '#0a7ea4',
                 },
                 saving && styles.disabledButton,
               ]}
               onPress={testConnection}
               disabled={saving}
             >
-              <ThemedText style={[styles.buttonText, { color: Colors[colorScheme ?? 'light'].tint }]}>
+              <ThemedText style={[styles.buttonText, { color: '#0a7ea4' }]}>
                 Test Connection
               </ThemedText>
             </TouchableOpacity>
