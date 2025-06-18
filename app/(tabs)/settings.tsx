@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
@@ -134,14 +136,14 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+        <ThemedView style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>
+            <ThemedText style={styles.title}>
               OpenAI Settings
-            </Text>
-            <Text style={styles.subtitle}>
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
               Configure your OpenAI API settings for AI automation
-            </Text>
+            </ThemedText>
           </View>
 
           <View style={styles.section}>
@@ -261,9 +263,9 @@ export default function SettingsScreen() {
               onPress={testConnection}
               disabled={saving}
             >
-              <ThemedText style={[styles.buttonText, { color: '#0a7ea4' }]}>
+              <Text style={[styles.buttonText, { color: '#0a7ea4' }]}>
                 Test Connection
-              </ThemedText>
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -280,18 +282,18 @@ export default function SettingsScreen() {
             <ThemedText type="defaultSemiBold" style={styles.infoTitle}>
               How it works
             </ThemedText>
-            <ThemedText style={styles.infoText}>
+            <Text style={styles.infoText}>
               • The app captures screenshots of your device
-            </ThemedText>
-            <ThemedText style={styles.infoText}>
+            </Text>
+            <Text style={styles.infoText}>
               • Screenshots are sent to your configured AI model
-            </ThemedText>
-            <ThemedText style={styles.infoText}>
+            </Text>
+            <Text style={styles.infoText}>
               • AI analyzes the image and returns touch coordinates
-            </ThemedText>
-            <ThemedText style={styles.infoText}>
+            </Text>
+            <Text style={styles.infoText}>
               • The app performs automated touches based on AI instructions
-            </ThemedText>
+            </Text>
           </View>
         </ThemedView>
       </ScrollView>
