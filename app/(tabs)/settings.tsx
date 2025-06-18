@@ -129,8 +129,8 @@ export default function SettingsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-          <ThemedText style={styles.loadingText}>Loading settings...</ThemedText>
+          <ActivityIndicator size="large" color="#0a7ea4" />
+          <Text style={styles.loadingText}>Loading settings...</Text>
         </View>
       </SafeAreaView>
     );
@@ -139,14 +139,14 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <ThemedView style={styles.content}>
+        <View style={styles.content}>
           <View style={styles.header}>
-            <ThemedText type="title" style={styles.title}>
+            <Text style={styles.title}>
               OpenAI Settings
-            </ThemedText>
-            <ThemedText style={styles.subtitle}>
+            </Text>
+            <Text style={styles.subtitle}>
               Configure your OpenAI API settings for AI automation
-            </ThemedText>
+            </Text>
           </View>
 
           <View style={styles.section}>
