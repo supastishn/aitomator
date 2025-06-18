@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
+import { View } from 'react-native';
+import { Text } from 'react-native';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
@@ -136,20 +136,20 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <ThemedView style={styles.content}>
+        <View style={styles.content}>
           <View style={styles.header}>
-            <ThemedText style={styles.title}>
+            <Text style={styles.title}>
               OpenAI Settings
-            </ThemedText>
-            <ThemedText style={styles.subtitle}>
+            </Text>
+            <Text style={styles.subtitle}>
               Configure your OpenAI API settings for AI automation
-            </ThemedText>
+            </Text>
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
               API Key *
-            </ThemedText>
+            </Text>
             <View style={[styles.inputContainer, { borderColor: '#687076' }]}>
               <TextInput
                 style={[
@@ -173,21 +173,21 @@ export default function SettingsScreen() {
                 style={styles.toggleButton}
                 onPress={() => setShowApiKey(!showApiKey)}
               >
-                <ThemedText style={styles.toggleText}>
+                <Text style={styles.toggleText}>
                   {showApiKey ? 'Hide' : 'Show'}
-                </ThemedText>
+                </Text>
               </TouchableOpacity>
             </View>
-            <ThemedText style={styles.helpText}>
+            <Text style={styles.helpText}>
               Your OpenAI API key. Get one from{' '}
               <Text style={styles.link}>platform.openai.com</Text>
-            </ThemedText>
+            </Text>
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
               Base URL *
-            </ThemedText>
+            </Text>
             <TextInput
               style={[
                 styles.input,
@@ -204,15 +204,15 @@ export default function SettingsScreen() {
               autoCorrect={false}
               keyboardType="url"
             />
-            <ThemedText style={styles.helpText}>
+            <Text style={styles.helpText}>
               OpenAI API base URL. Use custom endpoints for other providers.
-            </ThemedText>
+            </Text>
           </View>
 
           <View style={styles.section}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
               Model *
-            </ThemedText>
+            </Text>
             <TextInput
               style={[
                 styles.input,
@@ -228,9 +228,9 @@ export default function SettingsScreen() {
               autoCapitalize="none"
               autoCorrect={false}
             />
-            <ThemedText style={styles.helpText}>
+            <Text style={styles.helpText}>
               Model to use for AI automation. Recommended: gpt-4o or gpt-4-vision-preview
-            </ThemedText>
+            </Text>
           </View>
 
           <View style={styles.buttonContainer}>
@@ -279,9 +279,9 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.infoSection}>
-            <ThemedText type="defaultSemiBold" style={styles.infoTitle}>
+            <Text style={[styles.infoTitle, { fontWeight: '600' }]}>
               How it works
-            </ThemedText>
+            </Text>
             <Text style={styles.infoText}>
               • The app captures screenshots of your device
             </Text>
@@ -295,7 +295,7 @@ export default function SettingsScreen() {
               • The app performs automated touches based on AI instructions
             </Text>
           </View>
-        </ThemedView>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

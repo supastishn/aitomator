@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
-import AutomatorModule from '@/native'; // Mock this
+import AutomatorModule from '@/lib/native'; // Mock this
 
 jest.mock('@/native', () => ({
   isAccessibilityServiceEnabled: jest.fn(),
