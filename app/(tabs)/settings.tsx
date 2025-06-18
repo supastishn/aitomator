@@ -11,14 +11,9 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
   const [settings, setSettings] = useState<OpenAISettings>({
     apiKey: '',
     baseUrl: 'https://api.openai.com',
