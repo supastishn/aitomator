@@ -1,8 +1,6 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Alert, Linking } from 'react-native';
+import { StyleSheet, Alert, Linking, Text, View, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { View, TouchableOpacity } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import AutomatorModule from '@/lib/native';
 import { processScreenshot } from '@/services/aiProcessor';
@@ -86,14 +84,14 @@ export default function HomeScreen() {
             <TouchableOpacity 
               style={styles.button} 
               onPress={captureScreen}>
-              <ThemedText>Capture Screen</ThemedText>
+              <Text style={{ color: '#11181C' }}>Capture Screen</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.button} 
               onPress={runAutomation}
               disabled={!screenshotUri}>
-              <ThemedText>Run Automation</ThemedText>
+              <Text style={{ color: '#11181C' }}>Run Automation</Text>
             </TouchableOpacity>
           </View>
 
