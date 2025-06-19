@@ -1,10 +1,18 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Alert, Linking, Text, View, TouchableOpacity } from 'react-native';
+import { 
+  StyleSheet, 
+  Alert, 
+  Linking, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Platform 
+} from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import * as MediaLibrary from 'expo-media-library';
 import AutomatorModule from '@/lib/native';
 import { processScreenshot } from '@/services/aiProcessor';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ViewShot from 'react-native-view-shot';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 
@@ -13,6 +21,40 @@ export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [status, requestPermission] = MediaLibrary.usePermissions();
   const { isEnabled, isReady } = useAccessibilityCheck();
+
+  useEffect(() => {
+    if (isReady) {
+      checkAccessibilityOnStart();
+    }
+  }, [isReady]);
+
+  const openAccessibilitySettings = () => {
+    if (Platform.OS === 'android') {
+      Linking.sendIntent('android.settings.ACCESSIBILITY_SETTINGS');
+    } else {
+      // For iOS, there's no direct link to accessibility settings
+      Linking.openSettings();
+    }
+  };
+
+  const checkAccessibilityOnStart = () => {
+    if (!isEnabled) {
+      Alert.alert(
+        "Accessibility Service Required",
+        "This app requires accessibility permissions for automation features. Please enable AI Automator in accessibility settings.",
+        [
+          {
+            text: "Open Accessibility Settings",
+            onPress: () => openAccessibilitySettings()
+          },
+          {
+            text: "Cancel",
+            style: "cancel"
+          }
+        ]
+      );
+    }
+  };
 
   const promptAccessibility = () => {
     Alert.alert(
