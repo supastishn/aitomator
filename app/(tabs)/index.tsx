@@ -77,21 +77,20 @@ export default function HomeScreen() {
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'png', result: 'data-uri' }}
-        style={StyleSheet.absoluteFillObject}
       >
         <View style={styles.automationContainer}>
           <View style={styles.controls}>
             <TouchableOpacity 
               style={styles.button} 
               onPress={captureScreen}>
-              <Text style={{ color: '#11181C' }}>Capture Screen</Text>
+              <Text style={styles.buttonText}>Capture Screen</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.button} 
               onPress={runAutomation}
               disabled={!screenshotUri}>
-              <Text style={{ color: '#11181C' }}>Run Automation</Text>
+              <Text style={styles.buttonText}>Run Automation</Text>
             </TouchableOpacity>
           </View>
 
@@ -121,6 +120,12 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#e0e0e0',
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#11181C',
+    fontSize: 16,
   },
   preview: {
     width: '100%',
