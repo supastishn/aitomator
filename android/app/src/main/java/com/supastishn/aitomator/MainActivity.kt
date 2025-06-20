@@ -35,13 +35,14 @@ class MainActivity : ReactActivity() {
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate {
     return ReactActivityDelegateWrapper(
-          this,
-          BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
-          object : DefaultReactActivityDelegate(
-              this,
-              mainComponentName,
-              fabricEnabled
-          ){})
+        this,
+        BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+        object : DefaultReactActivityDelegate(
+            this,
+            mainComponentName,
+            fabricEnabled
+        ) {}
+    )
   }
 
   /**

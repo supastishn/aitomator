@@ -1,19 +1,25 @@
 import { NativeModules } from 'react-native';
 
-const { AutomatorModule } = NativeModules;
-
-if (!AutomatorModule) {
-  console.warn('AutomatorModule not found in NativeModules. Falling back to mock implementation.');
-}
+// Explicitly access the module instead of destructuring
+const AutomatorModule = NativeModules.AutomatorModule;
 
 interface AutomatorInterface {
-  isAccessibilityServiceEnabled: () => Promise<boolean>;
-  performTouch: (x: number, y: number) => Promise<void>;
+    isAccessibilityServiceEnabled: () => Promise<boolean>;
+    performTouch: (x: number, y: number) => Promise<void>;
+    takeScreenshot: () => Promise<string>;
 }
 
 const noopModule: AutomatorInterface = {
-  isAccessibilityServiceEnabled: async () => false,
-  performTouch: async () => {},
+    isAccessibilityServiceEnabled: async () => false,
+    performTouch: async () => {},
+    takeScreenshot: async () => 'mock-uri',
 };
 
-export default AutomatorModule || noopModule;
+// Check if all required methods are present
+const isValidModule = AutomatorModule && 
+    typeof AutomatorModule.isAccessibilityServiceEnabled === 'function' &&
+    typeof AutomatorModule.performTouch === 'function' &&
+    typeof AutomatorModule.takeScreenshot === 'function';
+
+// Export either the real module or fallback
+export default isValidModule ? AutomatorModule as AutomatorInterface : noopModule;

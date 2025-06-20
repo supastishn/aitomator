@@ -10,7 +10,9 @@ import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.Promise
 import java.io.File
 import java.io.FileOutputStream
+import com.facebook.react.module.annotations.ReactModule
 
+@ReactModule(name = "AutomatorModule")
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
     // Add to class variables
