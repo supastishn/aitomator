@@ -22,16 +22,18 @@ class AutomatorService : AccessibilityService() {
     }
 
     fun simulateTap(x: Float, y: Float) {
-        if (x < 0 || x > width || y < 0 || y > height) {
-            throw Exception("Invalid coordinates (${x}, ${y}) for screen size: ${width}x${height}")
-        }
-        val path = Path()
-        path.moveTo(x, y)
-        val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 10))
-            .build()
+        screenSize?.let { size ->
+            if (x < 0 || x > size.width || y < 0 || y > size.height) {
+                throw Exception("Invalid coordinates ($x,$y) for screen size: ${size.width}x${size.height}")
+            }
+            val path = Path()
+            path.moveTo(x, y)
+            val gesture = GestureDescription.Builder()
+                .addStroke(GestureDescription.StrokeDescription(path, 0, 10))
+                .build()
 
-        dispatchGesture(gesture, null, null)
+            dispatchGesture(gesture, null, null)
+        } ?: throw IllegalStateException("Screen size not initialized. Ensure service is connected.")
     }
 
     fun performSwipe(breakpoints: List<Pair<Float, Float>>) {

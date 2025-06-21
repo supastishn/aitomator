@@ -96,25 +96,34 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
     const subtasks: string[] = [];
     await new Promise<void>((resolve, reject) => {
       parseString(rawXML, { explicitArray: false }, (err, parsed) => {
-        if (err) return reject(new Error(`XML Parse Error: ${err.message}`));
-        if (parsed?.task?.subtask) {
-          const subtaskElements = Array.isArray(parsed.task.subtask)
-            ? parsed.task.subtask
-            : [parsed.task.subtask];
-          subtaskElements.forEach((s: any) => {
-            if (typeof s === 'string') {
-              subtasks.push(s.trim());
-            } else if (s?._) {
-              subtasks.push(s._.trim());
-            }
-          });
+        if (err) {
+          console.error('XML parsing failed:', err);
+          return resolve(); // Graceful exit instead of reject
         }
-        resolve();
+        
+        try {
+          if (parsed?.task?.subtask) {
+            const subtaskElements = Array.isArray(parsed.task.subtask)
+              ? parsed.task.subtask
+              : [parsed.task.subtask];
+            subtaskElements.forEach((s: any) => {
+              if (typeof s === 'string') {
+                subtasks.push(s.trim());
+              } else if (s?._) {
+                subtasks.push(s._.trim());
+              }
+            });
+          }
+          resolve();
+        } catch (parseError) {
+          console.error('XML content processing failed:', parseError);
+          resolve(); // Graceful exit
+        }
       });
     });
+
     if (subtasks.length > 0) return subtasks;
-    // If xml2js parsing yields nothing, fallback to regex
-    throw new Error('No subtasks found in parsed XML');
+    return []; // Empty array for all failure cases
   } catch (err) {
     console.error('XML parsing failed, using fallback regex method', err);
     // Fallback to regex parsing
