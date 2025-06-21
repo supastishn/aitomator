@@ -1,6 +1,7 @@
 import { Dimensions } from 'react-native';
 import { loadOpenAISettings } from '@/lib/openaiSettings';
 import AutomatorModule from '@/lib/native';
+import { parseString } from 'xml2js';
 
 // Tool definitions for OpenAI function calling
 const TOOLS = [
@@ -52,11 +53,12 @@ const TOOLS = [
   },
   {
     name: "end_subtask",
-    description: "Ends the current subtask. Use this when the subtask is complete.",
+    description: "MUST be called when the subtask is considered complete or has failed.",
     parameters: {
       type: "object",
       properties: {
-        success: { type: "boolean" }
+        success: { type: "boolean" },
+        error: { type: "string", description: "Error message if unsuccessful" }
       },
       required: ["success"]
     }
@@ -89,15 +91,41 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
   const result = await response.json();
   const rawXML = result.choices[0].message.content;
 
-  // Extract <subtask>...</subtask> blocks
-  const subtasks: string[] = [];
-  if (rawXML) {
-    for (const match of rawXML.matchAll(/<subtask>(.*?)<\/subtask>/gis)) {
-      subtasks.push(match[1].trim());
-    }
+  try {
+    // Parse XML using xml2js
+    const subtasks: string[] = [];
+    await new Promise<void>((resolve, reject) => {
+      parseString(rawXML, { explicitArray: false }, (err, parsed) => {
+        if (err) return reject(new Error(`XML Parse Error: ${err.message}`));
+        if (parsed?.task?.subtask) {
+          const subtaskElements = Array.isArray(parsed.task.subtask)
+            ? parsed.task.subtask
+            : [parsed.task.subtask];
+          subtaskElements.forEach((s: any) => {
+            if (typeof s === 'string') {
+              subtasks.push(s.trim());
+            } else if (s?._) {
+              subtasks.push(s._.trim());
+            }
+          });
+        }
+        resolve();
+      });
+    });
+    if (subtasks.length > 0) return subtasks;
+    // If xml2js parsing yields nothing, fallback to regex
+    throw new Error('No subtasks found in parsed XML');
+  } catch (err) {
+    console.error('XML parsing failed, using fallback regex method', err);
+    // Fallback to regex parsing
+    return rawXML.match(/<subtask>(.*?)<\/subtask>/gis)?.map(match =>
+      match.replace(/<\/?subtask>/g, '').trim()
+    ) || [];
   }
-  return subtasks;
 }
+
+const MAX_EXECUTION_ATTEMPTS = 5;
+const MAX_TOOL_CALLS_PER_STEP = 10;
 
 // Action Agent: Executes a subtask using tool calls and updates screenshot
 async function executeSubtask(
@@ -109,7 +137,7 @@ async function executeSubtask(
   const screenDimensions = Dimensions.get('window');
 
   // Conversation history for the action agent
-  const messages: any[] = [
+  let messages: any[] = [
     {
       role: "system",
       content: `You are an expert AI automation assistant. Use the available tools to complete the user's subtask. Always use function calls for actions.`
@@ -124,73 +152,118 @@ async function executeSubtask(
   ];
 
   let lastScreenshot = screenshot;
+  let executionAttempt = 0;
+  let lastError: Error | null = null;
 
-  // Action agent loop
-  while (true) {
-    const requestBody = {
-      model: settings.model,
-      messages,
-      tools: TOOLS,
-      tool_choice: "auto",
-    };
+  while (executionAttempt < MAX_EXECUTION_ATTEMPTS) {
+    executionAttempt++;
+    let actionsInLoop = 0;
+    let stepHadError = false;
 
-    const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${settings.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    while (actionsInLoop < MAX_TOOL_CALLS_PER_STEP) {
+      actionsInLoop++;
 
-    const result = await response.json();
-    const choice = result.choices[0];
-    messages.push(choice.message);
+      const requestBody = {
+        model: settings.model,
+        messages,
+        tools: TOOLS,
+        tool_choice: "auto",
+      };
 
-    // Handle tool calls
-    if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
-      for (const toolCall of choice.message.tool_calls) {
-        const args = JSON.parse(toolCall.function.arguments);
-        const name = toolCall.function.name;
-
-        // JUST PASS NORMALIZED COORDINATES TO NATIVE MODULE - NO CONVERSION
-        if (name === 'touch') {
-          await AutomatorModule.performTouch(
-            args.x, 
-            args.y, 
-            args.amount, 
-            args.spacing
-          );
-        } else if (name === 'swipe') {
-          await AutomatorModule.performSwipe(
-            args.breakpoints.map((pt: any) => ({ 
-              x: pt.x, 
-              y: pt.y 
-            }))
-          );
-        } else if (name === 'type') {
-          await AutomatorModule.typeText(args.text);
-        } else if (name === 'end_subtask') {
-          if (args.success) return;
-        }
-
-        // Update screenshot after each action
-        const newScreenshot = await AutomatorModule.takeScreenshot();
-        updateScreenshot(newScreenshot);
-        lastScreenshot = newScreenshot;
-
-        // Notify AI of action execution
-        messages.push({
-          role: "tool",
-          content: "Action executed successfully",
-          tool_call_id: toolCall.id
+      let result, choice;
+      try {
+        const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
         });
+
+        result = await response.json();
+        choice = result.choices[0];
+        messages.push(choice.message);
+      } catch (err: any) {
+        lastError = err;
+        break;
       }
-    } else {
-      // If no tool calls, break to avoid infinite loop
-      break;
+
+      // Handle tool calls
+      if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
+        for (const toolCall of choice.message.tool_calls) {
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            const name = toolCall.function.name;
+
+            // JUST PASS NORMALIZED COORDINATES TO NATIVE MODULE - NO CONVERSION
+            if (name === 'touch') {
+              await AutomatorModule.performTouch(
+                args.x,
+                args.y,
+                args.amount,
+                args.spacing
+              );
+            } else if (name === 'swipe') {
+              await AutomatorModule.performSwipe(
+                args.breakpoints.map((pt: any) => ({
+                  x: pt.x,
+                  y: pt.y
+                }))
+              );
+            } else if (name === 'type') {
+              await AutomatorModule.typeText(args.text);
+            } else if (name === 'end_subtask') {
+              if (args.success) return;
+              if (!args.success && args.error) {
+                throw new Error(args.error);
+              }
+            }
+
+            // Update screenshot after each action
+            const newScreenshot = await AutomatorModule.takeScreenshot();
+            updateScreenshot(newScreenshot);
+            lastScreenshot = newScreenshot;
+
+            // Notify AI of action execution
+            messages.push({
+              role: "tool",
+              content: "Action executed successfully",
+              tool_call_id: toolCall.id
+            });
+          } catch (toolError: any) {
+            messages.push({
+              role: "system",
+              content: `Execution failed: ${toolError.message}`
+            });
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: `Error: ${toolError.message}`
+            });
+            lastError = toolError;
+            stepHadError = true;
+            break;
+          }
+        }
+        if (stepHadError) break; // Break on first error in this step
+      } else {
+        // If no tool calls, break to avoid infinite loop
+        break;
+      }
     }
+
+    if (!lastError) return; // Success if no errors
+
+    // Add error context to retry
+    messages.unshift({
+      role: "system",
+      content: `Previous attempt failed (${executionAttempt}/${MAX_EXECUTION_ATTEMPTS}). Fix and retry:\n${lastError?.message}`
+    });
+    lastError = null; // Reset for next attempt
   }
+
+  throw new Error(`Subtask failed after ${MAX_EXECUTION_ATTEMPTS} attempts: ${lastError?.message || subtask}`);
 }
 
 // Main Orchestration: Runs the full workflow
@@ -200,11 +273,20 @@ export async function runAutomationWorkflow(
   updateStatus: (status: string) => void,
   updateScreenshot: (uri: string) => void
 ): Promise<void> {
-  updateStatus("Generating plan...");
-  const subtasks = await generatePlan(task, initialScreenshot);
+  let currentScreenshot = initialScreenshot;
+  try {
+    updateStatus("Generating plan...");
+    const subtasks = await generatePlan(task, currentScreenshot);
 
-  for (const [index, subtask] of subtasks.entries()) {
-    updateStatus(`Executing subtask ${index + 1}/${subtasks.length}: ${subtask}`);
-    await executeSubtask(subtask, initialScreenshot, updateScreenshot);
+    for (const [index, subtask] of subtasks.entries()) {
+      updateStatus(`Executing subtask ${index + 1}/${subtasks.length}: ${subtask}`);
+      await executeSubtask(subtask, currentScreenshot, (newScreenshot) => {
+        updateScreenshot(newScreenshot);
+        currentScreenshot = newScreenshot;
+      });
+    }
+  } catch (err: any) {
+    updateStatus(`Automation failed: ${err.message}`);
+    throw err;
   }
 }

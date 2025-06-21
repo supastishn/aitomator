@@ -22,6 +22,9 @@ class AutomatorService : AccessibilityService() {
     }
 
     fun simulateTap(x: Float, y: Float) {
+        if (x < 0 || x > width || y < 0 || y > height) {
+            throw Exception("Invalid coordinates (${x}, ${y}) for screen size: ${width}x${height}")
+        }
         val path = Path()
         path.moveTo(x, y)
         val gesture = GestureDescription.Builder()
