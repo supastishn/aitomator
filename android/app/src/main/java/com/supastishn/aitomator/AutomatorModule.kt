@@ -64,19 +64,20 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun performSwipe(breakpoints: ReadableArray, promise: Promise) {
         try {
-            val points = mutableListOf<Pair<Float, Float>>()
-            for (i in 0 until breakpoints.size()) {
-                val point = breakpoints.getMap(i)
-                points.add(
-                    Pair(
-                        point.getDouble("x").toFloat(),
-                        point.getDouble("y").toFloat()
-                    )
-                )
-            }
             val service = AutomatorService.getInstance()
-            service?.performSwipe(points)
-            promise.resolve(true)
+            service?.screenSize?.let { size ->
+                val points = mutableListOf<Pair<Float, Float>>()
+                
+                for (i in 0 until breakpoints.size()) {
+                    val point = breakpoints.getMap(i)
+                    // ADD COORDINATE CONVERSION HERE
+                    val x = (point.getDouble("x").toFloat() * size.width)
+                    val y = (point.getDouble("y").toFloat() * size.height)
+                    points.add(Pair(x, y))
+                }
+                service.performSwipe(points)
+                promise.resolve(true)
+            } ?: throw Exception("Screen size not available")
         } catch (e: Exception) {
             promise.reject("SWIPE_ERROR", e.message)
         }

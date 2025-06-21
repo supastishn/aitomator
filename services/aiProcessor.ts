@@ -153,26 +153,25 @@ async function executeSubtask(
         const args = JSON.parse(toolCall.function.arguments);
         const name = toolCall.function.name;
 
+        // JUST PASS NORMALIZED COORDINATES TO NATIVE MODULE - NO CONVERSION
         if (name === 'touch') {
-          // Convert normalized to screen coordinates
-          const x = Math.round(args.x * screenDimensions.width);
-          const y = Math.round(args.y * screenDimensions.height);
-          const amount = args.amount ?? 1;
-          const spacing = args.spacing ?? 0;
-          await AutomatorModule.performTouch(x, y, amount, spacing);
+          await AutomatorModule.performTouch(
+            args.x, 
+            args.y, 
+            args.amount, 
+            args.spacing
+          );
         } else if (name === 'swipe') {
-          // Convert breakpoints to screen coordinates
-          const breakpoints = (args.breakpoints || []).map((pt: any) => ({
-            x: Math.round(pt.x * screenDimensions.width),
-            y: Math.round(pt.y * screenDimensions.height)
-          }));
-          await AutomatorModule.performSwipe(breakpoints);
+          await AutomatorModule.performSwipe(
+            args.breakpoints.map((pt: any) => ({ 
+              x: pt.x, 
+              y: pt.y 
+            }))
+          );
         } else if (name === 'type') {
           await AutomatorModule.typeText(args.text);
         } else if (name === 'end_subtask') {
-          if (args.success) {
-            return; // Subtask complete
-          }
+          if (args.success) return;
         }
 
         // Update screenshot after each action
@@ -180,7 +179,7 @@ async function executeSubtask(
         updateScreenshot(newScreenshot);
         lastScreenshot = newScreenshot;
 
-        // Notify AI of tool execution result
+        // Notify AI of action execution
         messages.push({
           role: "tool",
           content: "Action executed successfully",

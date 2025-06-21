@@ -34,23 +34,41 @@ class AutomatorService : AccessibilityService() {
     fun performSwipe(breakpoints: List<Pair<Float, Float>>) {
         val path = Path()
         if (breakpoints.isEmpty()) return
-
+        
+        // MOVE TO FIRST POINT
         path.moveTo(breakpoints[0].first, breakpoints[0].second)
+        
+        // ADD ALL SUBSEQUENT POINTS
         for (i in 1 until breakpoints.size) {
             path.lineTo(breakpoints[i].first, breakpoints[i].second)
         }
-
+        
         val gesture = GestureDescription.Builder()
             .addStroke(
                 GestureDescription.StrokeDescription(
                     path,
                     0,
-                    breakpoints.size * 100L // Duration based on points
+                    // CALCULATE DURATION BASED ON DISTANCE
+                    calculateSwipeDuration(breakpoints)
                 )
             )
             .build()
-
+        
         dispatchGesture(gesture, null, null)
+    }
+
+    // ADD DURATION CALCULATION HELPER
+    private fun calculateSwipeDuration(points: List<Pair<Float, Float>>): Long {
+        if (points.size < 2) return 300L
+        var totalDistance = 0f
+        for (i in 1 until points.size) {
+            totalDistance += Math.hypot(
+                (points[i].first - points[i-1].first).toDouble(),
+                (points[i].second - points[i-1].second).toDouble()
+            ).toFloat()
+        }
+        // 100ms PER 100PX + minimum 100ms
+        return (totalDistance + 100).toLong()
     }
 
     fun typeText(text: String) {
