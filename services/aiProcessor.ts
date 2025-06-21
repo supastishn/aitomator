@@ -1,52 +1,139 @@
 import { Dimensions } from 'react-native';
 import { loadOpenAISettings } from '@/lib/openaiSettings';
+import AutomatorModule from '@/lib/native';
 
-export async function processScreenshot(screenshotUri: string): Promise<{x: number, y: number}[]> {
-  try {
-    // Load OpenAI settings
-    const settings = await loadOpenAISettings();
-    
-    if (!settings.apiKey) {
-      throw new Error('OpenAI API key not configured. Please check your settings.');
+// Tool definitions for OpenAI function calling
+const TOOLS = [
+  {
+    name: "touch",
+    description: "Simulates a touch or tap at a given screen coordinate. Accepts normalized coordinates (0-1) and optional amount/spread for multi-touch.",
+    parameters: {
+      type: "object",
+      properties: {
+        x: { type: "number", description: "Normalized x coordinate (0-1)" },
+        y: { type: "number", description: "Normalized y coordinate (0-1)" },
+        amount: { type: "number", description: "Number of simultaneous touches", default: 1 },
+        spacing: { type: "number", description: "Spacing between touches in pixels", default: 0 }
+      },
+      required: ["x", "y"]
     }
-
-    // Convert data URI to base64 if needed
-    let base64Image = screenshotUri;
-    if (screenshotUri.startsWith('data:image')) {
-      base64Image = screenshotUri.split(',')[1];
+  },
+  {
+    name: "swipe",
+    description: "Simulates a swipe gesture through a series of normalized breakpoints.",
+    parameters: {
+      type: "object",
+      properties: {
+        breakpoints: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              x: { type: "number" },
+              y: { type: "number" }
+            },
+            required: ["x", "y"]
+          }
+        }
+      },
+      required: ["breakpoints"]
     }
+  },
+  {
+    name: "type",
+    description: "Types the given text using the keyboard.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: { type: "string" }
+      },
+      required: ["text"]
+    }
+  },
+  {
+    name: "end_subtask",
+    description: "Ends the current subtask. Use this when the subtask is complete.",
+    parameters: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  }
+];
 
-    // Prepare the OpenAI Vision API request
+// Planner Agent: Generates subtasks from a high-level task and screenshot
+async function generatePlan(task: string, screenshot: string): Promise<string[]> {
+  const settings = await loadOpenAISettings();
+  const requestBody = {
+    model: settings.model,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: `Given the following user automation task, break it down into a sequence of subtasks in XML format. Each <subtask> should be a single actionable step. Only return the XML.\n\nTask: ${task}` },
+        { type: "image_url", image_url: { url: screenshot } }
+      ]
+    }]
+  };
+
+  const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${settings.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  const result = await response.json();
+  const rawXML = result.choices[0].message.content;
+
+  // Extract <subtask>...</subtask> blocks
+  const subtasks: string[] = [];
+  if (rawXML) {
+    for (const match of rawXML.matchAll(/<subtask>(.*?)<\/subtask>/gis)) {
+      subtasks.push(match[1].trim());
+    }
+  }
+  return subtasks;
+}
+
+// Action Agent: Executes a subtask using tool calls and updates screenshot
+async function executeSubtask(
+  subtask: string,
+  screenshot: string,
+  updateScreenshot: (uri: string) => void
+): Promise<void> {
+  const settings = await loadOpenAISettings();
+  const screenDimensions = Dimensions.get('window');
+
+  // Conversation history for the action agent
+  const messages: any[] = [
+    {
+      role: "system",
+      content: `You are an expert AI automation assistant. Use the available tools to complete the user's subtask. Always use function calls for actions.`
+    },
+    {
+      role: "user",
+      content: [
+        { type: "image_url", image_url: { url: screenshot } },
+        { type: "text", text: subtask }
+      ]
+    }
+  ];
+
+  let lastScreenshot = screenshot;
+
+  // Action agent loop
+  while (true) {
     const requestBody = {
       model: settings.model,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this screenshot and identify interactive elements that could be automated. Return a JSON array of touch coordinates in the format:
-              [{"x": 0.5, "y": 0.3}, {"x": 0.2, "y": 0.7}]
-              
-              Where x and y are normalized coordinates (0-1) representing the position on the screen.
-              Focus on buttons, links, input fields, and other clickable elements.
-              Return only the JSON array, no additional text.`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/png;base64,${base64Image}`,
-                detail: "high"
-              }
-            }
-          ]
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.1
+      messages,
+      tools: TOOLS,
+      tool_choice: "auto",
     };
 
-    // Make the API request
     const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: {
@@ -56,65 +143,69 @@ export async function processScreenshot(screenshotUri: string): Promise<{x: numb
       body: JSON.stringify(requestBody),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
-    }
-
     const result = await response.json();
-    
-    // Extract the response content
-    const content = result.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response content from OpenAI API');
-    }
+    const choice = result.choices[0];
+    messages.push(choice.message);
 
-    // Parse the JSON response
-    let coordinates;
-    try {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        coordinates = JSON.parse(jsonMatch[0]);
-      } else {
-        coordinates = JSON.parse(content);
+    // Handle tool calls
+    if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
+      for (const toolCall of choice.message.tool_calls) {
+        const args = JSON.parse(toolCall.function.arguments);
+        const name = toolCall.function.name;
+
+        if (name === 'touch') {
+          // Convert normalized to screen coordinates
+          const x = Math.round(args.x * screenDimensions.width);
+          const y = Math.round(args.y * screenDimensions.height);
+          const amount = args.amount ?? 1;
+          const spacing = args.spacing ?? 0;
+          await AutomatorModule.performTouch(x, y, amount, spacing);
+        } else if (name === 'swipe') {
+          // Convert breakpoints to screen coordinates
+          const breakpoints = (args.breakpoints || []).map((pt: any) => ({
+            x: Math.round(pt.x * screenDimensions.width),
+            y: Math.round(pt.y * screenDimensions.height)
+          }));
+          await AutomatorModule.performSwipe(breakpoints);
+        } else if (name === 'type') {
+          await AutomatorModule.typeText(args.text);
+        } else if (name === 'end_subtask') {
+          if (args.success) {
+            return; // Subtask complete
+          }
+        }
+
+        // Update screenshot after each action
+        const newScreenshot = await AutomatorModule.takeScreenshot();
+        updateScreenshot(newScreenshot);
+        lastScreenshot = newScreenshot;
+
+        // Notify AI of tool execution result
+        messages.push({
+          role: "tool",
+          content: "Action executed successfully",
+          tool_call_id: toolCall.id
+        });
       }
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', content);
-      throw new Error('Invalid response format from AI');
+    } else {
+      // If no tool calls, break to avoid infinite loop
+      break;
     }
+  }
+}
 
-    // Validate and transform coordinates
-    if (!Array.isArray(coordinates)) {
-      throw new Error('AI response is not an array of coordinates');
-    }
+// Main Orchestration: Runs the full workflow
+export async function runAutomationWorkflow(
+  task: string,
+  initialScreenshot: string,
+  updateStatus: (status: string) => void,
+  updateScreenshot: (uri: string) => void
+): Promise<void> {
+  updateStatus("Generating plan...");
+  const subtasks = await generatePlan(task, initialScreenshot);
 
-    const screenDimensions = Dimensions.get('window');
-    
-    return coordinates.map((coord: any, index: number) => {
-      if (typeof coord.x !== 'number' || typeof coord.y !== 'number') {
-        console.warn(`Invalid coordinate at index ${index}:`, coord);
-        return null;
-      }
-      
-      // Convert normalized coordinates (0-1) to screen pixels
-      const screenX = Math.round(coord.x * screenDimensions.width);
-      const screenY = Math.round(coord.y * screenDimensions.height);
-      
-      // Ensure coordinates are within screen bounds
-      const clampedX = Math.max(0, Math.min(screenX, screenDimensions.width));
-      const clampedY = Math.max(0, Math.min(screenY, screenDimensions.height));
-      
-      console.log(`Transformed coordinate ${index}: (${coord.x}, ${coord.y}) -> (${clampedX}, ${clampedY})`);
-      
-      return {
-        x: clampedX,
-        y: clampedY
-      };
-    }).filter(coord => coord !== null);
-
-  } catch (error) {
-    console.error('AI processing error:', error);
-    throw error;
+  for (const [index, subtask] of subtasks.entries()) {
+    updateStatus(`Executing subtask ${index + 1}/${subtasks.length}: ${subtask}`);
+    await executeSubtask(subtask, initialScreenshot, updateScreenshot);
   }
 }

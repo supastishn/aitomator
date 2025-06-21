@@ -5,13 +5,21 @@ const AutomatorModule = NativeModules.AutomatorModule;
 
 interface AutomatorInterface {
     isAccessibilityServiceEnabled: () => Promise<boolean>;
-    performTouch: (x: number, y: number) => Promise<void>;
+    performTouch: (x: number, y: number, amount?: number, spacing?: number) => Promise<void>;
+    performSwipe: (breakpoints: {x: number, y: number}[]) => Promise<void>;
+    typeText: (text: string) => Promise<void>;
+    searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
+    openApp: (packageName: string) => Promise<void>;
     takeScreenshot: () => Promise<string>;
 }
 
 const noopModule: AutomatorInterface = {
     isAccessibilityServiceEnabled: async () => false,
     performTouch: async () => {},
+    performSwipe: async () => {},
+    typeText: async () => {},
+    searchApps: async () => [],
+    openApp: async () => {},
     takeScreenshot: async () => 'mock-uri',
 };
 

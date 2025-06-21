@@ -6,33 +6,34 @@ import {
   Text, 
   View, 
   TouchableOpacity, 
-  Platform 
+  Platform,
+  TextInput
 } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
-import * as MediaLibrary from 'expo-media-library';
 import AutomatorModule from '@/lib/native';
-import { processScreenshot } from '@/services/aiProcessor';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import ViewShot from 'react-native-view-shot';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
+import { runAutomationWorkflow } from '@/services/aiProcessor';
 
 export default function HomeScreen() {
-  const viewShotRef = useRef<any>(null);
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  const [status, requestPermission] = MediaLibrary.usePermissions();
   const { isEnabled, isReady } = useAccessibilityCheck();
+  const [task, setTask] = useState('');
+  const [status, setStatus] = useState('Idle');
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     if (isReady) {
       checkAccessibilityOnStart();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
 
   const openAccessibilitySettings = () => {
     if (Platform.OS === 'android') {
       Linking.sendIntent('android.settings.ACCESSIBILITY_SETTINGS');
     } else {
-      // For iOS, there's no direct link to accessibility settings
       Linking.openSettings();
     }
   };
@@ -70,7 +71,7 @@ export default function HomeScreen() {
     );
   };
 
-  const captureScreen = async () => {
+  const startAutomation = async () => {
     if (!isReady) {
       Alert.alert("Service Initializing", "Please wait for the automation service to initialize");
       return;
@@ -79,31 +80,27 @@ export default function HomeScreen() {
       promptAccessibility();
       return;
     }
-
-    if (status !== 'granted') {
-      const { status: newStatus } = await MediaLibrary.requestPermissionsAsync();
-      if (newStatus !== 'granted') {
-        Alert.alert(
-          "Permission required",
-          "We need media permission to save screenshots"
-        );
-        return;
-      }
-    }
-
+    setIsRunning(true);
+    setStatus('Generating plan...');
     try {
-      const result = await viewShotRef.current.capture();
-      setScreenshotUri(result);
-    } catch (error) {
-      console.error('Capture failed', error);
-    }
-  };
+      const screenshot = await AutomatorModule.takeScreenshot();
+      setStatus('Captured initial screenshot');
+      setScreenshotUri(screenshot);
 
-  const runAutomation = async () => {
-    if (!screenshotUri) return;
-    const coordinates = await processScreenshot(screenshotUri);
-    for (const coord of coordinates) {
-      await AutomatorModule.performTouch(coord.x, coord.y);
+      await runAutomationWorkflow(
+        task,
+        screenshot,
+        (newStatus) => setStatus(newStatus),
+        (newScreenshot) => {
+          setScreenshotUri(newScreenshot);
+          setStatus('Updated screenshot after action');
+        }
+      );
+      setStatus('Automation complete!');
+    } catch (error: any) {
+      setStatus(`Error: ${error.message}`);
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -116,26 +113,25 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
-      <ViewShot
-        ref={viewShotRef}
-        options={{ format: 'png', result: 'data-uri' }}
-      >
+      <ViewShot>
         <View style={styles.automationContainer}>
+          <TextInput
+            style={[styles.textInput]}
+            placeholder="Enter your automation task"
+            value={task}
+            onChangeText={setTask}
+            editable={!isRunning}
+          />
           <View style={styles.controls}>
             <TouchableOpacity 
-              style={styles.button} 
-              onPress={captureScreen}>
-              <Text style={styles.buttonText}>Capture Screen</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={runAutomation}
-              disabled={!screenshotUri}>
+              style={[styles.button, isRunning && styles.disabledButton]} 
+              onPress={startAutomation}
+              disabled={isRunning || !task}
+            >
               <Text style={styles.buttonText}>Run Automation</Text>
             </TouchableOpacity>
           </View>
-
+          <Text style={styles.statusText}>{status}</Text>
           {screenshotUri && (
             <Image 
               source={{ uri: screenshotUri }} 
@@ -182,5 +178,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  textInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 10,
+  },
+  statusText: {
+    marginVertical: 10,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });
