@@ -30,6 +30,10 @@ allprojects {
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
+    // Add this Maven repo for React Native modules
+    maven {
+      url "${project(':react-native-mapbox-gl').projectDir}/libs"
+    }
   }
 }
 
