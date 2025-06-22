@@ -61,7 +61,6 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
-  implementation 'com.github.react-native-community:react-native-cameraroll:1.0.0'
 }
 
 /**
@@ -150,6 +149,7 @@ android {
 
 dependencies {
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    implementation 'com.github.react-native-community:react-native-cameraroll:1.0.0'
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
