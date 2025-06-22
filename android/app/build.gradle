@@ -155,9 +155,9 @@ dependencies {
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    // Add these explicit dependencies if needed
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.3.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // Use compatible versions for React Native 0.79.4
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
+    implementation("androidx.constraintlayout:constraintlayout:1.1.3")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
