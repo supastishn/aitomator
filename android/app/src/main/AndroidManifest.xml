@@ -35,7 +35,6 @@
     <service 
         android:name=".AutomatorService"
         android:exported="true"
-        android:foregroundServiceType="accessibility"
         android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
         android:label="AI Automator">
         <intent-filter>
