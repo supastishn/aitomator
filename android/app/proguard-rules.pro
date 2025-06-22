@@ -7,8 +7,10 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# react-native-reanimated
+# Add these lines to handle React Native and Reanimated
+-keep class com.facebook.react.** { *; }
 -keep class com.swmansion.reanimated.** { *; }
+-keep class com.facebook.hermes.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
