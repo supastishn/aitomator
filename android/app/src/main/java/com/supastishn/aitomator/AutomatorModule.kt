@@ -67,12 +67,13 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val service = AutomatorService.getInstance()
             service?.screenSize?.let { size ->
                 val points = mutableListOf<Pair<Float, Float>>()
-                
+
                 for (i in 0 until breakpoints.size()) {
-                    val point = breakpoints.getMap(i)
-                    // ADD COORDINATE CONVERSION HERE
-                    val x = (point.getDouble("x").toFloat() * size.width)
-                    val y = (point.getDouble("y").toFloat() * size.height)
+                    val point = breakpoints.getMap(i) ?: continue  // Skip if null
+                    if (!point.hasKey("x") || !point.hasKey("y")) continue  // Skip if coords missing
+
+                    val x = point.getDouble("x").toFloat() * size.width
+                    val y = point.getDouble("y").toFloat() * size.height
                     points.add(Pair(x, y))
                 }
                 service.performSwipe(points)
@@ -104,9 +105,10 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val matches = Arguments.createArray()
 
             for (pkg in packages) {
-                val appInfo = pkg.applicationInfo
-                val appName = appInfo.loadLabel(context.packageManager).toString()
-                val packageName = appInfo.packageName
+                val appInfo = pkg.applicationInfo ?: continue  // Skip if null
+
+                val appName = appInfo.loadLabel(context.packageManager)?.toString() ?: continue
+                val packageName = appInfo.packageName ?: continue
 
                 if (appName.contains(query, true)) {
                     val appMap = Arguments.createMap()
