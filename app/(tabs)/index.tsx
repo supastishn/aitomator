@@ -42,7 +42,7 @@ export default function HomeScreen() {
     if (!isEnabled) {
       Alert.alert(
         "Accessibility Service Required",
-        "This app requires accessibility permissions for automation features. Please enable AI Automator in accessibility settings.",
+        "This app requires accessibility permissions for automation features. Please enable AutoMate in accessibility settings.",
         [
           {
             text: "Open Accessibility Settings",
@@ -60,7 +60,7 @@ export default function HomeScreen() {
   const promptAccessibility = () => {
     Alert.alert(
       "Accessibility Permission Required",
-      "Please enable AI Automator in accessibility settings for touch automation",
+      "Please enable AutoMate in accessibility settings for touch automation",
       [
         {
           text: "Open Settings",

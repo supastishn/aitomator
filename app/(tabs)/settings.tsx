@@ -137,10 +137,10 @@ export default function SettingsScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>
-              OpenAI Settings
+              AutoMate Settings
             </Text>
             <Text style={styles.subtitle}>
-              Configure your OpenAI API settings for AI automation
+              Configure your OpenAI API settings for AutoMate
             </Text>
           </View>
 

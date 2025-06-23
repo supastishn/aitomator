@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "aitomator",
-    "slug": "aitomator",
+    "name": "AutoMate",
+    "slug": "automate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
