@@ -1,7 +1,7 @@
 import { Dimensions } from 'react-native';
 import { loadOpenAISettings } from '@/lib/openaiSettings';
 import AutomatorModule from '@/lib/native';
-import { parseString } from 'xml2js';
+import { XMLParser } from 'fast-xml-parser';
 
 // Tool definitions for OpenAI function calling
 const TOOLS = [
@@ -92,38 +92,16 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
   const rawXML = result.choices[0].message.content;
 
   try {
-    // Parse XML using xml2js
-    const subtasks: string[] = [];
-    await new Promise<void>((resolve, reject) => {
-      parseString(rawXML, { explicitArray: false }, (err, parsed) => {
-        if (err) {
-          console.error('XML parsing failed:', err);
-          return resolve(); // Graceful exit instead of reject
-        }
-        
-        try {
-          if (parsed?.task?.subtask) {
-            const subtaskElements = Array.isArray(parsed.task.subtask)
-              ? parsed.task.subtask
-              : [parsed.task.subtask];
-            subtaskElements.forEach((s: any) => {
-              if (typeof s === 'string') {
-                subtasks.push(s.trim());
-              } else if (s?._) {
-                subtasks.push(s._.trim());
-              }
-            });
-          }
-          resolve();
-        } catch (parseError) {
-          console.error('XML content processing failed:', parseError);
-          resolve(); // Graceful exit
-        }
-      });
-    });
+    const parser = new XMLParser({ ignoreAttributes: true });
+    const parsed = parser.parse(rawXML);
 
-    if (subtasks.length > 0) return subtasks;
-    return []; // Empty array for all failure cases
+    if (parsed?.task?.subtask) {
+      const subtaskElements = Array.isArray(parsed.task.subtask)
+        ? parsed.task.subtask
+        : [parsed.task.subtask];
+      return subtaskElements.map((s: any) => s.toString().trim());
+    }
+    return [];
   } catch (err) {
     console.error('XML parsing failed, using fallback regex method', err);
     // Fallback to regex parsing
