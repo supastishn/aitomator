@@ -6,61 +6,73 @@ import { XMLParser } from 'fast-xml-parser';
 // Tool definitions for OpenAI function calling
 const TOOLS = [
   {
-    name: "touch",
-    description: "Simulates a touch or tap at a given screen coordinate. Accepts normalized coordinates (0-1) and optional amount/spread for multi-touch.",
-    parameters: {
-      type: "object",
-      properties: {
-        x: { type: "number", description: "Normalized x coordinate (0-1)" },
-        y: { type: "number", description: "Normalized y coordinate (0-1)" },
-        amount: { type: "number", description: "Number of simultaneous touches", default: 1 },
-        spacing: { type: "number", description: "Spacing between touches in pixels", default: 0 }
-      },
-      required: ["x", "y"]
+    type: "function",
+    function: {
+      name: "touch",
+      description: "Simulates a touch or tap at a given screen coordinate. Accepts normalized coordinates (0-1) and optional amount/spread for multi-touch.",
+      parameters: {
+        type: "object",
+        properties: {
+          x: { type: "number", description: "Normalized x coordinate (0-1)" },
+          y: { type: "number", description: "Normalized y coordinate (0-1)" },
+          amount: { type: "number", description: "Number of simultaneous touches", default: 1 },
+          spacing: { type: "number", description: "Spacing between touches in pixels", default: 0 }
+        },
+        required: ["x", "y"]
+      }
     }
   },
   {
-    name: "swipe",
-    description: "Simulates a swipe gesture through a series of normalized breakpoints.",
-    parameters: {
-      type: "object",
-      properties: {
-        breakpoints: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              x: { type: "number" },
-              y: { type: "number" }
-            },
-            required: ["x", "y"]
+    type: "function",
+    function: {
+      name: "swipe",
+      description: "Simulates a swipe gesture through a series of normalized breakpoints.",
+      parameters: {
+        type: "object",
+        properties: {
+          breakpoints: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                x: { type: "number" },
+                y: { type: "number" }
+              },
+              required: ["x", "y"]
+            }
           }
-        }
-      },
-      required: ["breakpoints"]
+        },
+        required: ["breakpoints"]
+      }
     }
   },
   {
-    name: "type",
-    description: "Types the given text using the keyboard.",
-    parameters: {
-      type: "object",
-      properties: {
-        text: { type: "string" }
-      },
-      required: ["text"]
+    type: "function",
+    function: {
+      name: "type",
+      description: "Types the given text using the keyboard.",
+      parameters: {
+        type: "object",
+        properties: {
+          text: { type: "string" }
+        },
+        required: ["text"]
+      }
     }
   },
   {
-    name: "end_subtask",
-    description: "MUST be called when the subtask is considered complete or has failed.",
-    parameters: {
-      type: "object",
-      properties: {
-        success: { type: "boolean" },
-        error: { type: "string", description: "Error message if unsuccessful" }
-      },
-      required: ["success"]
+    type: "function",
+    function: {
+      name: "end_subtask",
+      description: "MUST be called when the subtask is considered complete or has failed.",
+      parameters: {
+        type: "object",
+        properties: {
+          success: { type: "boolean" },
+          error: { type: "string", description: "Error message if unsuccessful" }
+        },
+        required: ["success"]
+      }
     }
   }
 ];
@@ -156,8 +168,17 @@ async function executeSubtask(
     {
       role: "user",
       content: [
-        { type: "image_url", image_url: { url: screenshot } },
-        { type: "text", text: subtask }
+        {
+          type: "text",
+          text: subtask
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/png;base64,${screenshot}`,
+            detail: "auto"
+          }
+        }
       ]
     }
   ];
@@ -198,7 +219,9 @@ async function executeSubtask(
         console.log('OpenAI action response status:', response.status);
 
         if (!response.ok) {
-          const errorBody = await response.text();
+          // Use .clone() before reading response body
+          const errorClone = response.clone();
+          const errorBody = await errorClone.text();
           console.error('OpenAI action API error:', errorBody);
           // Add this line to include body in the error
           console.debug('Request body sent:', JSON.stringify(requestBody, null, 2));
