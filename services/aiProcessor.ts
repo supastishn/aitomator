@@ -111,7 +111,9 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
       throw new Error(`API error ${response.status}: ${errorText}`);
     }
 
-    const result = await response.json();
+    const responseText = await response.text();
+    console.log('OpenAI API raw response text:', responseText);  // Add this before parsing
+    const result = JSON.parse(responseText);
     console.log('OpenAI API response:', result);
 
     const rawXML = result.choices[0].message.content;
@@ -216,7 +218,9 @@ async function executeSubtask(
           throw new Error(`API error ${response.status}: ${errorText}`);
         }
 
-        result = await response.json();
+        const responseText = await response.text();
+        console.log('Action request raw response text:', responseText);  // Add this before parsing
+        result = JSON.parse(responseText);
         choice = result.choices[0];
         messages.push(choice.message);
       } catch (err: any) {
