@@ -76,19 +76,8 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
     model: settings.model,
     messages: [{
       role: "user",
-      content: [
-        { 
-          type: "text",
-          text: `Given the following user automation task, break it down into a sequence of subtasks in XML format. Each <subtask> should be a single actionable step. Only return the XML.\n\nTask: ${task}`
-        },
-        { 
-          type: "image_url",
-          image_url: {
-            url: screenshot,
-            detail: "low"
-          }
-        }
-      ]
+      // REMOVE IMAGE FROM PLANNING REQUEST
+      content: `Given the following user automation task, break it down into a sequence of subtasks in XML format. Each <subtask> should be a single actionable step. Only return the XML.\n\nTask: ${task}`
     }]
   };
 
