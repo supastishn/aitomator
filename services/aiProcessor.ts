@@ -172,7 +172,7 @@ async function executeSubtask(
         {
           type: "image_url",
           image_url: {
-            url: `data:image/png;base64,${screenshot}`,
+            url: `data:image/jpeg;base64,${screenshot}`, // Changed to JPEG
             detail: "auto"
           }
         }

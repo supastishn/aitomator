@@ -28,10 +28,10 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val bitmap = Bitmap.createBitmap(rootView?.drawingCache ?: return)
             rootView?.isDrawingCacheEnabled = false
 
-            // Convert to base64
+            // Convert to JPEG with 90% quality
             val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            val base64 = "data:image/png;base64," +
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream) // Changed to JPEG
+            val base64 = "data:image/jpeg;base64," + // Changed to JPEG
                          Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT)
             promise.resolve(base64)
         } catch (e: Exception) {
