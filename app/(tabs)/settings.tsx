@@ -16,7 +16,7 @@ import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISett
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
     apiKey: '',
-    baseUrl: 'https://api.openai.com',
+    baseUrl: 'https://api.openai.com/v1',  // Added /v1
     model: 'gpt-4o',
   });
   const [loading, setLoading] = useState(true);
@@ -79,7 +79,7 @@ export default function SettingsScreen() {
               await clearOpenAISettings();
               setSettings({
                 apiKey: '',
-                baseUrl: 'https://api.openai.com',
+                baseUrl: 'https://api.openai.com/v1',  // Added /v1
                 model: 'gpt-4o',
               });
               Alert.alert('Success', 'Settings cleared successfully!');
