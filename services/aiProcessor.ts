@@ -110,6 +110,8 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
     if (!response.ok) {
       const errorBody = await response.text();
       console.error('OpenAI API error:', errorBody);
+      // Add this line to include body in the error
+      console.debug('Request body sent:', JSON.stringify(requestBody, null, 2));
       throw new Error(`API error: ${response.statusText}`);
     }
 
@@ -209,6 +211,8 @@ async function executeSubtask(
         if (!response.ok) {
           const errorBody = await response.text();
           console.error('OpenAI action API error:', errorBody);
+          // Add this line to include body in the error
+          console.debug('Request body sent:', JSON.stringify(requestBody, null, 2));
           throw new Error(`API error: ${response.statusText}`);
         }
 
