@@ -68,46 +68,77 @@ const TOOLS = [
 // Planner Agent: Generates subtasks from a high-level task and screenshot
 async function generatePlan(task: string, screenshot: string): Promise<string[]> {
   const settings = await loadOpenAISettings();
+
+  // For debug logging
+  console.log('OpenAI settings:', settings);
+
   const requestBody = {
     model: settings.model,
     messages: [{
       role: "user",
       content: [
-        { type: "text", text: `Given the following user automation task, break it down into a sequence of subtasks in XML format. Each <subtask> should be a single actionable step. Only return the XML.\n\nTask: ${task}` },
-        { type: "image_url", image_url: { url: screenshot } }
+        { 
+          type: "text",
+          text: `Given the following user automation task, break it down into a sequence of subtasks in XML format. Each <subtask> should be a single actionable step. Only return the XML.\n\nTask: ${task}`
+        },
+        { 
+          type: "image_url",
+          image_url: {
+            url: screenshot,
+            detail: "low"
+          }
+        }
       ]
     }]
   };
 
-  const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${settings.apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  const result = await response.json();
-  const rawXML = result.choices[0].message.content;
+  console.log('Sending request to OpenAI:', JSON.stringify(requestBody, null, 2));
 
   try {
-    const parser = new XMLParser({ ignoreAttributes: true });
-    const parsed = parser.parse(rawXML);
+    // CHANGED: Removed /v1 from URL
+    const response = await fetch(`${settings.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${settings.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
 
-    if (parsed?.task?.subtask) {
-      const subtaskElements = Array.isArray(parsed.task.subtask)
-        ? parsed.task.subtask
-        : [parsed.task.subtask];
-      return subtaskElements.map((s: any) => s.toString().trim());
+    console.log('OpenAI response status:', response.status);
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('OpenAI API error:', errorBody);
+      throw new Error(`API error: ${response.statusText}`);
     }
-    return [];
+
+    const result = await response.json();
+    console.log('OpenAI API response:', result);
+
+    const rawXML = result.choices[0].message.content;
+
+    try {
+      const parser = new XMLParser({ ignoreAttributes: true });
+      const parsed = parser.parse(rawXML);
+
+      if (parsed?.task?.subtask) {
+        const subtaskElements = Array.isArray(parsed.task.subtask)
+          ? parsed.task.subtask
+          : [parsed.task.subtask];
+        return subtaskElements.map((s: any) => s.toString().trim());
+      }
+      return [];
+    } catch (err) {
+      console.error('XML parsing failed, using fallback regex method', err);
+      // Fallback to regex parsing
+      return rawXML.match(/<subtask>(.*?)<\/subtask>/gis)?.map(match =>
+        match.replace(/<\/?subtask>/g, '').trim()
+      ) || [];
+    }
   } catch (err) {
-    console.error('XML parsing failed, using fallback regex method', err);
-    // Fallback to regex parsing
-    return rawXML.match(/<subtask>(.*?)<\/subtask>/gis)?.map(match =>
-      match.replace(/<\/?subtask>/g, '').trim()
-    ) || [];
+    console.error('generatePlan error:', err);
+    throw err;
   }
 }
 
@@ -157,9 +188,12 @@ async function executeSubtask(
         tool_choice: "auto",
       };
 
+      console.log('Sending action request to OpenAI:', JSON.stringify(requestBody, null, 2));
+
       let result, choice;
       try {
-        const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
+        // CHANGED: Removed /v1 from URL
+        const response = await fetch(`${settings.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${settings.apiKey}`,
@@ -168,7 +202,17 @@ async function executeSubtask(
           body: JSON.stringify(requestBody),
         });
 
+        console.log('OpenAI action response status:', response.status);
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          console.error('OpenAI action API error:', errorBody);
+          throw new Error(`API error: ${response.statusText}`);
+        }
+
         result = await response.json();
+        console.log('OpenAI action API response:', result);
+
         choice = result.choices[0];
         messages.push(choice.message);
       } catch (err: any) {
