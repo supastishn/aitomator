@@ -97,23 +97,18 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
 
   try {
     // CHANGED: Removed /v1 from URL
-    const response = await fetch(`${settings.baseUrl}/chat/completions`, {
+    const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${settings.apiKey}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.apiKey}`,
       },
       body: JSON.stringify(requestBody),
     });
 
-    console.log('OpenAI response status:', response.status);
-
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('OpenAI API error:', errorBody);
-      // Add this line to include body in the error
-      console.debug('Request body sent:', JSON.stringify(requestBody, null, 2));
-      throw new Error(`API error: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`API error ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
@@ -207,30 +202,21 @@ async function executeSubtask(
       let result, choice;
       try {
         // CHANGED: Removed /v1 from URL
-        const response = await fetch(`${settings.baseUrl}/chat/completions`, {
+        const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${settings.apiKey}`,
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.apiKey}`,
           },
           body: JSON.stringify(requestBody),
         });
 
-        console.log('OpenAI action response status:', response.status);
-
         if (!response.ok) {
-          // Use .clone() before reading response body
-          const errorClone = response.clone();
-          const errorBody = await errorClone.text();
-          console.error('OpenAI action API error:', errorBody);
-          // Add this line to include body in the error
-          console.debug('Request body sent:', JSON.stringify(requestBody, null, 2));
-          throw new Error(`API error: ${response.statusText}`);
+          const errorText = await response.text();
+          throw new Error(`API error ${response.status}: ${errorText}`);
         }
 
         result = await response.json();
-        console.log('OpenAI action API response:', result);
-
         choice = result.choices[0];
         messages.push(choice.message);
       } catch (err: any) {

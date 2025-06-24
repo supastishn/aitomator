@@ -31,7 +31,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             // Convert to base64
             val stream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            val base64 = Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT)
+            val base64 = "data:image/png;base64," +
+                         Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT)
             promise.resolve(base64)
         } catch (e: Exception) {
             promise.reject("SCREENSHOT_ERROR", e.message)

@@ -11,7 +11,7 @@ const SETTINGS_KEY = 'openai_settings';
 
 const defaultSettings: OpenAISettings = {
   apiKey: '',
-  baseUrl: 'https://api.openai.com',
+  baseUrl: 'https://api.openai.com/v1',  // Ensure /v1 is included
   model: 'gpt-4o',
 };
 
