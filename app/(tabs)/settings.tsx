@@ -100,7 +100,7 @@ export default function SettingsScreen() {
 
     setSaving(true);
     try {
-      const response = await fetch(`${settings.baseUrl}/v1/models`, {
+      const response = await fetch(`${settings.baseUrl}/models`, {
         headers: {
           'Authorization': `Bearer ${settings.apiKey}`,
           'Content-Type': 'application/json',

@@ -97,7 +97,7 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
 
   try {
     // CHANGED: Removed /v1 from URL
-    const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
+    const response = await fetch(`${settings.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -202,7 +202,7 @@ async function executeSubtask(
       let result, choice;
       try {
         // CHANGED: Removed /v1 from URL
-        const response = await fetch(`${settings.baseUrl}/v1/chat/completions`, {
+        const response = await fetch(`${settings.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
