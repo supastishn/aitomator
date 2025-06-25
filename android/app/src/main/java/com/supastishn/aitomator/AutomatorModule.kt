@@ -44,18 +44,21 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun performTouch(x: Float, y: Float, amount: Int, spacing: Int, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
-            service?.screenSize?.let { size ->
-                val screenX = x * size.width
-                val screenY = y * size.height
+                ?: throw Exception("Service unavailable")
+            service.screenSize
+                ?: throw Exception("Screen size unavailable")
 
-                for (i in 0 until amount) {
-                    service.simulateTap(screenX, screenY)
-                    if (spacing > 0 && i < amount - 1) {
-                        Thread.sleep(spacing.toLong())
-                    }
+            val size = service.screenSize!!
+            val screenX = x * size.width
+            val screenY = y * size.height
+
+            for (i in 0 until amount) {
+                service.simulateTap(screenX, screenY)
+                if (spacing > 0 && i < amount - 1) {
+                    Thread.sleep(spacing.toLong())
                 }
-                promise.resolve(true)
-            } ?: throw Exception("Screen size not available")
+            }
+            promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("TOUCH_ERROR", e.message)
         }
@@ -66,20 +69,23 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun performSwipe(breakpoints: ReadableArray, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
-            service?.screenSize?.let { size ->
-                val points = mutableListOf<Pair<Float, Float>>()
+                ?: throw Exception("Service unavailable")
+            service.screenSize
+                ?: throw Exception("Screen size unavailable")
 
-                for (i in 0 until breakpoints.size()) {
-                    val point = breakpoints.getMap(i) ?: continue  // Skip if null
-                    if (!point.hasKey("x") || !point.hasKey("y")) continue  // Skip if coords missing
+            val size = service.screenSize!!
+            val points = mutableListOf<Pair<Float, Float>>()
 
-                    val x = point.getDouble("x").toFloat() * size.width
-                    val y = point.getDouble("y").toFloat() * size.height
-                    points.add(Pair(x, y))
-                }
-                service.performSwipe(points)
-                promise.resolve(true)
-            } ?: throw Exception("Screen size not available")
+            for (i in 0 until breakpoints.size()) {
+                val point = breakpoints.getMap(i) ?: continue  // Skip if null
+                if (!point.hasKey("x") || !point.hasKey("y")) continue  // Skip if coords missing
+
+                val x = point.getDouble("x").toFloat() * size.width
+                val y = point.getDouble("y").toFloat() * size.height
+                points.add(Pair(x, y))
+            }
+            service.performSwipe(points)
+            promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("SWIPE_ERROR", e.message)
         }
@@ -90,7 +96,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun typeText(text: String, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
-            service?.typeText(text)
+                ?: throw Exception("Accessibility service not initialized")
+
+            if (!service.typeText(text)) {
+                throw Exception("No focused input field available")
+            }
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("TYPE_ERROR", e.message)

@@ -23,17 +23,17 @@ class AutomatorService : AccessibilityService() {
 
     fun simulateTap(x: Float, y: Float) {
         screenSize?.let { size ->
-            if (x < 0 || x > size.width || y < 0 || y > size.height) {
-                throw Exception("Invalid coordinates ($x,$y) for screen size: ${size.width}x${size.height}")
+            if (x in 0f..size.width && y in 0f..size.height) {
+                val path = Path()
+                path.moveTo(x, y)
+                val gesture = GestureDescription.Builder()
+                    .addStroke(GestureDescription.StrokeDescription(path, 0, 10))
+                    .build()
+                dispatchGesture(gesture, null, null)
+            } else {
+                throw Exception("Coordinates ($x,$y) out of bounds for screen ${size.width}x${size.height}")
             }
-            val path = Path()
-            path.moveTo(x, y)
-            val gesture = GestureDescription.Builder()
-                .addStroke(GestureDescription.StrokeDescription(path, 0, 10))
-                .build()
-
-            dispatchGesture(gesture, null, null)
-        } ?: throw IllegalStateException("Screen size not initialized. Ensure service is connected.")
+        } ?: throw Exception("Screen size unavailable")
     }
 
     fun performSwipe(breakpoints: List<Pair<Float, Float>>) {
@@ -76,16 +76,17 @@ class AutomatorService : AccessibilityService() {
         return (totalDistance + 100).toLong()
     }
 
-    fun typeText(text: String) {
-        rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.let { node ->
-            val arguments = Bundle().apply {
-                putCharSequence(
-                    AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                    text
-                )
-            }
-            node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+    fun typeText(text: String): Boolean {
+        val node = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            ?: return false  // Return false if no focused input
+
+        val arguments = Bundle().apply {
+            putCharSequence(
+                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                text
+            )
         }
+        return node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
     }
 
     private val width: Int
