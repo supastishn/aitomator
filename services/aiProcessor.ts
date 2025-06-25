@@ -106,6 +106,7 @@ RULES:
 
   console.log('Sending request to OpenAI:', JSON.stringify(requestBody, null, 2));
 
+  let responseText: string | undefined;
   try {
     // CHANGED: Removed /v1 from URL
     const response = await fetch(`${settings.baseUrl}/chat/completions`, {
@@ -118,11 +119,11 @@ RULES:
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API error ${response.status}: ${errorText}`);
+      responseText = await response.text();
+      throw new Error(`API error ${response.status}: ${responseText}`);
     }
 
-    const responseText = await response.text();
+    responseText = await response.text();
     console.log('OpenAI API raw response text:', responseText);  // Add this before parsing
     const result = JSON.parse(responseText);
     console.log('OpenAI API response:', result);
@@ -149,8 +150,9 @@ RULES:
     }
   } catch (err) {
     console.error('generatePlan error:', err);
-    // Add this error log for request body
-    console.error('Error request body:', JSON.stringify(requestBody, null, 2));
+    if (responseText) {
+      console.error('OpenAI API raw error response:', responseText);
+    }
     throw err;
   }
 }
@@ -213,6 +215,7 @@ async function executeSubtask(
       console.log('Sending action request to OpenAI:', JSON.stringify(requestBody, null, 2));
 
       let result, choice;
+      let responseText: string | undefined;
       try {
         // CHANGED: Removed /v1 from URL
         const response = await fetch(`${settings.baseUrl}/chat/completions`, {
@@ -225,17 +228,21 @@ async function executeSubtask(
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API error ${response.status}: ${errorText}`);
+          responseText = await response.text();
+          console.error('Action request raw error response:', responseText);
+          throw new Error(`API error ${response.status}: ${responseText}`);
         }
 
-        const responseText = await response.text();
+        responseText = await response.text();
         console.log('Action request raw response text:', responseText);  // Add this before parsing
         result = JSON.parse(responseText);
         choice = result.choices[0];
         messages.push(choice.message);
       } catch (err: any) {
         lastError = err;
+        if (responseText) {
+          console.error('Action request raw error response:', responseText);
+        }
         break;
       }
 
