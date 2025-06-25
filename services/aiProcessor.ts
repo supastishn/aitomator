@@ -88,8 +88,19 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
     model: settings.model,
     messages: [{
       role: "user",
-      // REMOVE IMAGE FROM PLANNING REQUEST
-      content: `Given the following user automation task, break it down into a sequence of subtasks in XML format. Each <subtask> should be a single actionable step. Only return the XML.\n\nTask: ${task}`
+      content: `Given this task: "${task}", break it down into XML subtasks.
+EXAMPLE for "Open settings and turn on Bluetooth":
+<task>
+  <subtask>Open Settings app</subtask>
+  <subtask>Tap Bluetooth menu</subtask>
+  <subtask>Toggle Bluetooth switch on</subtask>
+</task>
+
+RULES:
+1. ONLY return XML with NO additional text
+2. Use the EXACT tags: <task> and <subtask>
+3. Each subtask must be a SINGLE action
+4. Keep descriptions brief (3-7 words)`
     }]
   };
 
