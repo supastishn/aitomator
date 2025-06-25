@@ -160,6 +160,32 @@ RULES:
 const MAX_EXECUTION_ATTEMPTS = 5;
 const MAX_TOOL_CALLS_PER_STEP = 10;
 
+/**
+ * Recursively redacts any image_url.url fields in an object.
+ */
+function redactImageUrl(obj: any) {
+  if (!obj || typeof obj !== 'object') return;
+  
+  for (const key in obj) {
+    if (key === 'image_url' && obj[key]?.url) {
+      obj[key].url = '[REDACTED]';
+    } else if (Array.isArray(obj[key])) {
+      obj[key].forEach(redactImageUrl);
+    } else if (typeof obj[key] === 'object') {
+      redactImageUrl(obj[key]);
+    }
+  }
+}
+
+/**
+ * Creates a deep clone of the request body and redacts image URLs for safe logging.
+ */
+function createSafeLogBody(requestBody: any) {
+  const clone = JSON.parse(JSON.stringify(requestBody));
+  redactImageUrl(clone);
+  return clone;
+}
+
 // Action Agent: Executes a subtask using tool calls and updates screenshot
 async function executeSubtask(
   subtask: string,
@@ -212,7 +238,10 @@ async function executeSubtask(
         tool_choice: "auto",
       };
 
-      console.log('Sending action request to OpenAI:', JSON.stringify(requestBody, null, 2));
+      console.log(
+        'Sending action request to OpenAI:', 
+        JSON.stringify(createSafeLogBody(requestBody), null, 2)
+      );
 
       let result, choice;
       let responseText: string | undefined;
