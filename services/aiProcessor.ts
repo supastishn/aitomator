@@ -236,8 +236,6 @@ async function executeSubtask(
         messages.push(choice.message);
       } catch (err: any) {
         lastError = err;
-        // Add this log for tool processing errors
-        console.error('executeSubtask request body on error:', JSON.stringify(requestBody, null, 2));
         break;
       }
 
@@ -248,7 +246,6 @@ async function executeSubtask(
             const args = JSON.parse(toolCall.function.arguments);
             const name = toolCall.function.name;
 
-            // JUST PASS NORMALIZED COORDINATES TO NATIVE MODULE - NO CONVERSION
             if (name === 'touch') {
               await AutomatorModule.performTouch(
                 args.x,
@@ -284,8 +281,6 @@ async function executeSubtask(
               tool_call_id: toolCall.id
             });
           } catch (toolError: any) {
-            // Add this log for tool execution errors
-            console.error('executeSubtask tool execution error body:', JSON.stringify(requestBody, null, 2));
             messages.push({
               role: "system",
               content: `Execution failed: ${toolError.message}`
