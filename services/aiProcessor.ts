@@ -283,12 +283,14 @@ async function executeSubtask(
             const name = toolCall.function.name;
 
             if (name === 'touch') {
-              await AutomatorModule.performTouch(
-                args.x,
-                args.y,
-                args.amount,
-                args.spacing
-              );
+              // Validate required parameters with type checking
+              if (typeof args.x !== 'number' || typeof args.y !== 'number') {
+                throw new Error('x and y coordinates must be numbers');
+              }
+              // Handle optional parameters with default values
+              const amount = (typeof args.amount === 'number') ? args.amount : 1;
+              const spacing = (typeof args.spacing === 'number') ? args.spacing : 0;
+              await AutomatorModule.performTouch(args.x, args.y, amount, spacing);
             } else if (name === 'swipe') {
               await AutomatorModule.performSwipe(
                 args.breakpoints.map((pt: any) => ({
