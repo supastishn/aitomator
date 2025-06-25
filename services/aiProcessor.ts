@@ -74,6 +74,40 @@ const TOOLS = [
         required: ["success"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_apps",
+      description: "Searches installed apps by name returns app names and package IDs",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { 
+            type: "string",
+            description: "Partial or full app name to search for"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "open_app",
+      description: "Launches an Android app using its package name",
+      parameters: {
+        type: "object",
+        properties: {
+          packageName: {
+            type: "string",
+            description: "App's package name from search_apps results"
+          }
+        },
+        required: ["packageName"]
+      }
+    }
   }
 ];
 
@@ -99,6 +133,12 @@ EXAMPLE for "Open settings and turn on Bluetooth":
   <subtask>Open Settings app</subtask>
   <subtask>Navigate to Bluetooth settings</subtask>
   <subtask>Activate Bluetooth toggle</subtask>
+</task>
+
+EXAMPLE for "Open Facebook app":
+<task>
+  <subtask>Search installed apps for "Facebook"</subtask>
+  <subtask>Open Facebook using package name</subtask>
 </task>
 
 RULES:
@@ -308,24 +348,46 @@ async function executeSubtask(
               );
             } else if (name === 'type') {
               await AutomatorModule.typeText(args.text);
+            } else if (name === 'search_apps') {
+              const results = await AutomatorModule.searchApps(args.query);
+              const resultText = results
+                .map(app => `${app.appName}: ${app.packageName}`)
+                .join('\n');
+              // Send results back to AI
+              messages.push({
+                role: "tool",
+                content: resultText || "No apps found",
+                tool_call_id: toolCall.id
+              });
+            } else if (name === 'open_app') {
+              await AutomatorModule.openApp(args.packageName);
+              // Update screenshot after app opens
+              const newScreenshot = await AutomatorModule.takeScreenshot();
+              updateScreenshot(newScreenshot);
+              lastScreenshot = newScreenshot;
+              messages.push({
+                role: "tool",
+                content: "App launched successfully",
+                tool_call_id: toolCall.id
+              });
             } else if (name === 'end_subtask') {
               if (args.success) return;
               if (!args.success && args.error) {
                 throw new Error(args.error);
               }
+            } else {
+              // Update screenshot after each action
+              const newScreenshot = await AutomatorModule.takeScreenshot();
+              updateScreenshot(newScreenshot);
+              lastScreenshot = newScreenshot;
+
+              // Notify AI of action execution
+              messages.push({
+                role: "tool",
+                content: "Action executed successfully",
+                tool_call_id: toolCall.id
+              });
             }
-
-            // Update screenshot after each action
-            const newScreenshot = await AutomatorModule.takeScreenshot();
-            updateScreenshot(newScreenshot);
-            lastScreenshot = newScreenshot;
-
-            // Notify AI of action execution
-            messages.push({
-              role: "tool",
-              content: "Action executed successfully",
-              tool_call_id: toolCall.id
-            });
           } catch (toolError: any) {
             messages.push({
               role: "system",
