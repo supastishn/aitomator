@@ -77,8 +77,9 @@ const TOOLS = [
   }
 ];
 
-// Simplified tool names for planner
-const TOOL_NAMES = TOOLS.map(tool => tool.function.name);
+const TOOL_DATA = TOOLS.map(tool => 
+  `${tool.function.name}: ${tool.function.description}`
+).join('\n');
 
 // Planner Agent: Generates subtasks from a high-level task and screenshot
 async function generatePlan(task: string, screenshot: string): Promise<string[]> {
@@ -90,7 +91,8 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
       role: "user",
       content: `You are a task planner for an automation assistant. Break down the user's task into 3-7 atomic subtasks.
 
-Available Actions: ${TOOL_NAMES.join(', ')}
+AVAILABLE TOOLS:
+${TOOL_DATA}
 
 EXAMPLE for "Open settings and turn on Bluetooth":
 <task>
