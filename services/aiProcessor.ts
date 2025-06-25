@@ -3,7 +3,7 @@ import { loadOpenAISettings } from '@/lib/openaiSettings';
 import AutomatorModule from '@/lib/native';
 import { XMLParser } from 'fast-xml-parser';
 
-// Tool definitions for OpenAI function calling
+ // Tool definitions for OpenAI function calling
 const TOOLS = [
   {
     type: "function",
@@ -77,30 +77,36 @@ const TOOLS = [
   }
 ];
 
+// Simplified tool names for planner
+const TOOL_NAMES = TOOLS.map(tool => tool.function.name);
+
 // Planner Agent: Generates subtasks from a high-level task and screenshot
 async function generatePlan(task: string, screenshot: string): Promise<string[]> {
   const settings = await loadOpenAISettings();
-
-  // For debug logging
-  console.log('OpenAI settings:', settings);
-
+  
   const requestBody = {
     model: settings.model,
     messages: [{
       role: "user",
-      content: `Given this task: "${task}", break it down into XML subtasks.
+      content: `You are a task planner for an automation assistant. Break down the user's task into 3-7 atomic subtasks.
+
+Available Actions: ${TOOL_NAMES.join(', ')}
+
 EXAMPLE for "Open settings and turn on Bluetooth":
 <task>
   <subtask>Open Settings app</subtask>
-  <subtask>Tap Bluetooth menu</subtask>
-  <subtask>Toggle Bluetooth switch on</subtask>
+  <subtask>Navigate to Bluetooth settings</subtask>
+  <subtask>Activate Bluetooth toggle</subtask>
 </task>
 
 RULES:
 1. ONLY return XML with NO additional text
-2. Use the EXACT tags: <task> and <subtask>
-3. Each subtask must be a SINGLE action
-4. Keep descriptions brief (3-7 words)`
+2. Use exact tags: <task> and <subtask>
+3. Each subtask must describe one action in 3-7 words
+4. Subtasks must be achievable using available actions
+5. Consider current screen for initial actions
+
+TASK: "${task}"`
     }]
   };
 
