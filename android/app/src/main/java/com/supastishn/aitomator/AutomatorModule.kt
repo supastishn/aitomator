@@ -112,15 +112,17 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun searchApps(query: String, promise: Promise) {
         try {
             val context = reactApplicationContext
-            val packages = context.packageManager.getInstalledPackages(0)
+            val pm = context.packageManager
             val matches = Arguments.createArray()
-
-            for (pkg in packages) {
-                val appInfo = pkg.applicationInfo ?: continue  // Skip if null
-
-                val appName = appInfo.loadLabel(context.packageManager)?.toString() ?: continue
-                val packageName = appInfo.packageName ?: continue
-
+            
+            // FIXED: Use getInstalledApplications instead of getInstalledPackages
+            val apps = pm.getInstalledApplications(0)
+            
+            for (appInfo in apps) {
+                // FIXED: Load label correctly
+                val appName = appInfo.loadLabel(pm).toString()
+                val packageName = appInfo.packageName
+                
                 if (appName.contains(query, true)) {
                     val appMap = Arguments.createMap()
                     appMap.putString("appName", appName)
@@ -128,10 +130,10 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                     matches.pushMap(appMap)
                 }
             }
-
+            
             promise.resolve(matches)
         } catch (e: Exception) {
-            promise.reject("SEARCH_APPS_ERROR", e.message)
+            promise.reject("SEARCH_APPS_ERROR", "Error searching apps: ${e.message}")
         }
     }
 
