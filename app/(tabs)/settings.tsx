@@ -340,6 +340,10 @@ export default function SettingsScreen() {
                 setFunctionResult("");
                 try {
                   const args = functionArgs.trim() ? JSON.parse(functionArgs) : {};
+
+                  // ADD LOGGING HERE
+                  console.log(`Testing function: ${functionName} with arguments`, args);
+
                   let result;
                   switch (functionName) {
                     case "touch":
@@ -375,13 +379,20 @@ export default function SettingsScreen() {
                     default:
                       throw new Error(`Unknown function: ${functionName}`);
                   }
+
+                  // LOG THE RESULT BEFORE SETTING STATE
+                  console.log(`Function ${functionName} result:`, result);
+
                   setFunctionResult(
-                    typeof result === "string"
-                      ? result
-                      : JSON.stringify(result, null, 2)
+                    typeof result === "object" 
+                      ? JSON.stringify(result, null, 2)
+                      : String(result),
                   );
                 } catch (error: any) {
-                  setFunctionResult(`Error: ${error.message}`);
+                  const errorMsg = `Error: ${error.message}`;
+                  // LOG ERROR TOO
+                  console.error(`Function ${functionName} error:`, error);
+                  setFunctionResult(errorMsg);
                 }
               }}
             >
