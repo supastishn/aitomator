@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
+import { Collapsible } from '@/components/Collapsible';
+import AutomatorModule from '@/lib/native';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
@@ -22,6 +24,12 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+
+  // Debug panel state
+  const [functionName, setFunctionName] = useState("");
+  const [functionArgs, setFunctionArgs] = useState("");
+  const [functionResult, setFunctionResult] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -293,6 +301,105 @@ export default function SettingsScreen() {
               • The app performs automated touches based on AI instructions
             </Text>
           </View>
+
+          <Collapsible
+            title="LLM Function Debugger"
+            isExpanded={isExpanded}
+            onToggle={() => setIsExpanded(!isExpanded)}
+          >
+            <Text style={styles.debugTitle}>Test LLM Functions</Text>
+            
+            <View style={styles.debugInputContainer}>
+              <Text style={styles.debugLabel}>Function Name:</Text>
+              <TextInput
+                style={styles.debugInput}
+                value={functionName}
+                onChangeText={setFunctionName}
+                placeholder="touch, search_apps, etc."
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            
+            <View style={styles.debugInputContainer}>
+              <Text style={styles.debugLabel}>Arguments (JSON):</Text>
+              <TextInput
+                style={[styles.debugInput, { height: 100 }]}
+                multiline
+                value={functionArgs}
+                onChangeText={setFunctionArgs}
+                placeholder={`{\n  "x": 0.5,\n  "y": 0.5\n}`}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            
+            <TouchableOpacity
+              style={[styles.button, styles.debugButton]}
+              onPress={async () => {
+                setFunctionResult("");
+                try {
+                  const args = functionArgs.trim() ? JSON.parse(functionArgs) : {};
+                  let result;
+                  switch (functionName) {
+                    case "touch":
+                      result = await AutomatorModule.performTouch(
+                        args.x, 
+                        args.y, 
+                        args.amount || 1,
+                        args.spacing || 0
+                      );
+                      break;
+                    case "swipe":
+                      result = await AutomatorModule.performSwipe(args.breakpoints);
+                      break;
+                    case "search_apps":
+                      result = await AutomatorModule.searchApps(args.query);
+                      break;
+                    case "open_app":
+                      result = await AutomatorModule.openApp(args.packageName);
+                      break;
+                    case "typeText":
+                    case "type_text":
+                    case "type":
+                      result = await AutomatorModule.typeText(args.text);
+                      break;
+                    case "takeScreenshot":
+                    case "take_screenshot":
+                      result = await AutomatorModule.takeScreenshot();
+                      break;
+                    case "isAccessibilityServiceEnabled":
+                    case "is_accessibility_service_enabled":
+                      result = await AutomatorModule.isAccessibilityServiceEnabled();
+                      break;
+                    default:
+                      throw new Error(`Unknown function: ${functionName}`);
+                  }
+                  setFunctionResult(
+                    typeof result === "string"
+                      ? result
+                      : JSON.stringify(result, null, 2)
+                  );
+                } catch (error: any) {
+                  setFunctionResult(`Error: ${error.message}`);
+                }
+              }}
+            >
+              <Text style={styles.buttonText}>Test Function</Text>
+            </TouchableOpacity>
+            
+            {functionResult ? (
+              <View style={styles.resultContainer}>
+                <Text style={styles.resultLabel}>Result:</Text>
+                <TextInput
+                  style={[styles.debugInput, { height: 200 }]}
+                  multiline
+                  editable={false}
+                  value={functionResult}
+                />
+              </View>
+            ) : null}
+          </Collapsible>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -417,5 +524,41 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 4,
     opacity: 0.8,
+  },
+  debugTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#11181C',
+  },
+  debugInputContainer: {
+    marginVertical: 8,
+  },
+  debugLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+    color: '#11181C',
+  },
+  debugInput: {
+    borderWidth: 1,
+    borderColor: '#687076',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: 'white',
+    fontSize: 14,
+    color: '#11181C',
+  },
+  debugButton: {
+    backgroundColor: '#3a0ca3',
+    marginVertical: 16,
+  },
+  resultContainer: {
+    marginTop: 16,
+  },
+  resultLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#11181C',
   },
 });

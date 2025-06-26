@@ -1,27 +1,31 @@
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren } from 'react';
 import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import { IconSymbol } from '@/components/IconSymbol';
 
-export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
-  const [isOpen, setIsOpen] = useState(false);
+interface Props extends PropsWithChildren {
+  title: string;
+  isExpanded?: boolean;
+  onToggle?: () => void;
+}
 
+export function Collapsible({ children, title, isExpanded = false, onToggle }: Props) {
   return (
     <View>
       <TouchableOpacity
         style={styles.heading}
-        onPress={() => setIsOpen((value) => !value)}
+        onPress={onToggle}
         activeOpacity={0.8}>
         <IconSymbol
           name="chevron.right"
           size={18}
           weight="medium"
           color="#687076"
-          style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}
+          style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
         />
 
         <Text style={styles.defaultSemiBold}>{title}</Text>
       </TouchableOpacity>
-      {isOpen && <View style={styles.content}>{children}</View>}
+      {isExpanded && <View style={styles.content}>{children}</View>}
     </View>
   );
 }
