@@ -353,6 +353,14 @@ async function executeSubtask(
               const amount = (typeof args.amount === 'number') ? args.amount : 1;
               const spacing = (typeof args.spacing === 'number') ? args.spacing : 0;
               await AutomatorModule.performTouch(args.x, args.y, amount, spacing);
+              const resultText = "Touch performed successfully";
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText);
+              messages.push({
+                role: "tool",
+                content: resultText,
+                tool_call_id: toolCall.id
+              });
             } else if (name === 'swipe') {
               await AutomatorModule.performSwipe(
                 args.breakpoints.map((pt: any) => ({
@@ -360,13 +368,31 @@ async function executeSubtask(
                   y: pt.y
                 }))
               );
+              const resultText = "Swipe performed successfully";
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText);
+              messages.push({
+                role: "tool",
+                content: resultText,
+                tool_call_id: toolCall.id
+              });
             } else if (name === 'type') {
               await AutomatorModule.typeText(args.text);
+              const resultText = "Text typed successfully";
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText);
+              messages.push({
+                role: "tool",
+                content: resultText,
+                tool_call_id: toolCall.id
+              });
             } else if (name === 'search_apps') {
               const results = await AutomatorModule.searchApps(args.query);
               const resultText = results
                 .map(app => `${app.appName}: ${app.packageName}`)
                 .join('\n');
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText || "No apps found");
               // Send results back to AI
               messages.push({
                 role: "tool",
@@ -379,14 +405,25 @@ async function executeSubtask(
               const newScreenshot = await AutomatorModule.takeScreenshot();
               updateScreenshot(newScreenshot);
               lastScreenshot = newScreenshot;
+              const resultText = "App launched successfully";
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText);
               messages.push({
                 role: "tool",
-                content: "App launched successfully",
+                content: resultText,
                 tool_call_id: toolCall.id
               });
             } else if (name === 'end_subtask') {
-              if (args.success) return;
+              if (args.success) {
+                const resultText = "Subtask ended successfully";
+                // LOG TOOL CALL RESULT
+                console.log(`Tool call ${toolCall.id} result:`, resultText);
+                return;
+              }
               if (!args.success && args.error) {
+                const resultText = `Subtask failed: ${args.error}`;
+                // LOG TOOL CALL RESULT
+                console.log(`Tool call ${toolCall.id} result:`, resultText);
                 throw new Error(args.error);
               }
             } else {
@@ -396,21 +433,27 @@ async function executeSubtask(
               lastScreenshot = newScreenshot;
 
               // Notify AI of action execution
+              const resultText = "Action executed successfully";
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText);
               messages.push({
                 role: "tool",
-                content: "Action executed successfully",
+                content: resultText,
                 tool_call_id: toolCall.id
               });
             }
           } catch (toolError: any) {
+            const errorMessage = `Execution failed: ${toolError.message}`;
+            // LOG ERROR RESULT
+            console.log(`Tool call ${toolCall.id} error:`, errorMessage);
             messages.push({
               role: "system",
-              content: `Execution failed: ${toolError.message}`
+              content: errorMessage
             });
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: `Error: ${toolError.message}`
+              content: errorMessage
             });
             lastError = toolError;
             stepHadError = true;
