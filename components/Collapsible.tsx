@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { StyleSheet, TouchableOpacity, Text, View } from 'react-native';
-import { IconSymbol } from '@/components/IconSymbol';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 interface Props extends PropsWithChildren {
   title: string;
