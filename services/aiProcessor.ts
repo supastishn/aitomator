@@ -152,7 +152,7 @@ TASK: "${task}"`
     }]
   };
 
-  console.log('Sending request to OpenAI:', JSON.stringify(requestBody, null, 2));
+  // Removed request logging here
 
   let responseText: string | undefined;
   try {
@@ -286,10 +286,7 @@ async function executeSubtask(
         tool_choice: "auto",
       };
 
-      console.log(
-        'Sending action request to OpenAI:', 
-        JSON.stringify(createSafeLogBody(requestBody), null, 2)
-      );
+      // Removed request logging here
 
       let result, choice;
       let responseText: string | undefined;
@@ -315,6 +312,23 @@ async function executeSubtask(
         result = JSON.parse(responseText);
         choice = result.choices[0];
         messages.push(choice.message);
+
+        // Add tool call response logging here
+        if (choice.message.tool_calls) {
+          console.log(
+            'Tool call response:',
+            choice.message.tool_calls.map((tc: any) => ({
+              name: tc.function.name,
+              arguments: (() => {
+                try {
+                  return JSON.parse(tc.function.arguments);
+                } catch {
+                  return tc.function.arguments;
+                }
+              })()
+            }))
+          );
+        }
       } catch (err: any) {
         lastError = err;
         if (responseText) {
