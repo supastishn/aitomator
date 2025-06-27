@@ -4,6 +4,7 @@ import AutomatorModule from '@/lib/native';
 export default function useAccessibilityCheck() {
   const [isEnabled, setIsEnabled] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     const checkService = async () => {
@@ -11,6 +12,7 @@ export default function useAccessibilityCheck() {
         if (AutomatorModule && typeof AutomatorModule.isAccessibilityServiceEnabled === 'function') {
           const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
           setIsEnabled(enabled);
+          setIsActive(enabled); // Since isAccessibilityServiceEnabled now checks connection
         } else {
           console.warn('AutomatorModule not ready for accessibility check');
         }
@@ -23,5 +25,5 @@ export default function useAccessibilityCheck() {
     checkService();
   }, []);
 
-  return { isEnabled, isReady };
+  return { isEnabled, isReady, isActive };
 }

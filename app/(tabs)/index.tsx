@@ -27,7 +27,7 @@ interface Point {
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  const { isEnabled, isReady } = useAccessibilityCheck();
+  const { isEnabled, isReady, isActive } = useAccessibilityCheck();
   const [task, setTask] = useState('');
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
@@ -75,8 +75,10 @@ export default function HomeScreen() {
 
   const promptAccessibility = () => {
     Alert.alert(
-      "Accessibility Permission Required",
-      "Please enable AutoMate in accessibility settings for touch automation",
+      "Accessibility Service 🔒",
+      isActive
+        ? "Service is active and ready!"
+        : `Service enabled but ${isReady ? "inactive - restart app?" : "initializing..."}`,
       [
         {
           text: "Open Settings",

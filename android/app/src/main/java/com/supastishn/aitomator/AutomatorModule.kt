@@ -200,14 +200,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun isAccessibilityServiceEnabled(promise: Promise) {
         try {
-            val context = reactApplicationContext
-            val enabledServices = android.provider.Settings.Secure.getString(
-                context.contentResolver,
-                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-            )
-            val expectedService = "${context.packageName}/${AutomatorService::class.qualifiedName}"
-            val isEnabled = enabledServices?.contains(expectedService) == true
-            promise.resolve(isEnabled)
+            // Replace settings check with connection check
+            promise.resolve(AutomatorService.isConnected())
         } catch (e: Exception) {
             promise.reject("ACCESSIBILITY_CHECK_ERROR", e.message)
         }
