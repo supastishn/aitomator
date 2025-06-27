@@ -63,7 +63,12 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                     Thread.sleep(spacing.toLong())
                 }
             }
-            promise.resolve(true)
+            
+            // Create and return pixel location
+            val resultMap = Arguments.createMap()
+            resultMap.putDouble("x", screenX)
+            resultMap.putDouble("y", screenY)
+            promise.resolve(resultMap)
         } catch (e: Exception) {
             promise.reject("TOUCH_ERROR", e.message)
         }

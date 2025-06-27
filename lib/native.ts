@@ -19,7 +19,7 @@ interface AutomatorInterface extends NativeModule {
 
 const noopModule: AutomatorInterface = {
     isAccessibilityServiceEnabled: async () => false,
-    performTouch: async () => {},
+    performTouch: async () => ({ x: 0, y: 0 }),
     performSwipe: async () => {},
     typeText: async () => {},
     searchApps: async () => [],
