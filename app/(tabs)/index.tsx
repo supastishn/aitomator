@@ -10,6 +10,7 @@ import {
   TextInput,
   Clipboard,
   PanResponder,
+  TouchableHighlight,
 } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import AutomatorModule from '@/lib/native';
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const [swipePoints, setSwipePoints] = useState<Point[]>([]);
   const [currentCommand, setCurrentCommand] = useState('');
   const previewLayout = useRef({ x: 0, y: 0, width: 1, height: 1 });
+  const [gestureStarted, setGestureStarted] = useState(false);
 
   useEffect(() => {
     if (isReady) {
@@ -142,16 +144,21 @@ export default function HomeScreen() {
     setCurrentCommand(`swipe({ breakpoints: [${formatted}] })`);
   };
 
+  // Enhanced panResponder for gesture feedback
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => debugMode,
     onMoveShouldSetPanResponder: () => debugMode,
     onPanResponderGrant: (e) => {
-      setSwipePoints([calculateNormalizedPosition(e)]);
+      setGestureStarted(true);
+      const point = calculateNormalizedPosition(e);
+      setSwipePoints([point]);
     },
     onPanResponderMove: (e) => {
-      setSwipePoints(prev => [...prev, calculateNormalizedPosition(e)]);
+      const point = calculateNormalizedPosition(e);
+      setSwipePoints(prev => [...prev, point]);
     },
     onPanResponderRelease: () => {
+      setGestureStarted(false);
       if (swipePoints.length < 2) {
         if (swipePoints[0]) handleTap(swipePoints[0]);
       } else {
@@ -202,9 +209,9 @@ export default function HomeScreen() {
           <View
             style={styles.previewContainer}
             onLayout={e => previewLayout.current = e.nativeEvent.layout}
-            {...(debugMode ? panResponder.panHandlers : {})}
+            {...panResponder.panHandlers}
           >
-            {debugMode && swipePoints.length > 0 && (
+            {debugMode && gestureStarted && swipePoints.length > 0 && (
               <Svg style={StyleSheet.absoluteFill}>
                 <Polyline
                   points={swipePoints.map(p =>

@@ -6,15 +6,25 @@ interface Props extends PropsWithChildren {
   title: string;
   isExpanded?: boolean;
   onToggle?: () => void;
+  TouchableComponent?: React.ComponentType<any>;
 }
 
-export function Collapsible({ children, title, isExpanded = false, onToggle }: Props) {
+export function Collapsible({ 
+  children, 
+  title, 
+  isExpanded = false, 
+  onToggle,
+  TouchableComponent = TouchableOpacity
+}: Props) {
+  const Touchable = TouchableComponent;
+
   return (
     <View>
-      <TouchableOpacity
+      <Touchable
         style={styles.heading}
         onPress={onToggle}
-        activeOpacity={0.8}>
+        activeOpacity={0.8}
+      >
         <IconSymbol
           name="chevron.right"
           size={18}
@@ -24,7 +34,7 @@ export function Collapsible({ children, title, isExpanded = false, onToggle }: P
         />
 
         <Text style={styles.defaultSemiBold}>{title}</Text>
-      </TouchableOpacity>
+      </Touchable>
       {isExpanded && <View style={styles.content}>{children}</View>}
     </View>
   );

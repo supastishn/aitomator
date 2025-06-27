@@ -309,6 +309,14 @@ export default function SettingsScreen() {
           >
             <Text style={styles.debugTitle}>Test LLM Functions</Text>
             
+            <Text style={styles.debugHint}>
+              TIP: You can test touch gestures in the home screen debug mode
+            </Text>
+            <Text style={styles.debugHint}>
+              - Tap to generate touch coordinates{"\n"}
+              - Swipe to generate swipe breakpoints
+            </Text>
+            
             <View style={styles.debugInputContainer}>
               <Text style={styles.debugLabel}>Function Name:</Text>
               <TextInput
