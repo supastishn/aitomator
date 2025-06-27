@@ -112,58 +112,31 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun searchApps(query: String, promise: Promise) {
         try {
-            val queryNormalized = query.trim()
-            android.util.Log.d("SEARCH_APPS", "Searching for: $queryNormalized")
-            if (queryNormalized.isEmpty()) {
-                promise.resolve(com.facebook.react.bridge.Arguments.createArray())
-                return
-            }
-
-            val context = reactApplicationContext
-            val pm = context.packageManager
-
-            // Create MAIN+LAUNCHER intent
+            val pm = reactApplicationContext.packageManager
             val mainIntent = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
 
-            // Use new MATCH_ALL flag for modern Android
-            val launchableApps = pm.queryIntentActivities(
-                mainIntent,
-                android.content.pm.PackageManager.MATCH_ALL or android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
-            )
-            android.util.Log.d("SEARCH_APPS", "Total launchable apps: ${launchableApps.size}")
+            // Get launchable apps
+            val launchableApps = pm.queryIntentActivities(mainIntent, android.content.pm.PackageManager.MATCH_ALL)
+            java.util.Collections.sort(launchableApps, android.content.pm.ResolveInfo.DisplayNameComparator(pm))
 
             val matches = com.facebook.react.bridge.Arguments.createArray()
-            val comparator = android.content.pm.ResolveInfo.DisplayNameComparator(pm)
-
-            // Sort alphabetically
-            java.util.Collections.sort(launchableApps, comparator)
+            val queryLower = query.trim().lowercase()
 
             for (resolveInfo in launchableApps) {
-                val activityInfo = resolveInfo.activityInfo
-                val packageName = activityInfo.packageName
+                val packageName = resolveInfo.activityInfo.packageName
                 val appName = resolveInfo.loadLabel(pm).toString()
 
-                // 1. Direct match check (app name)
-                if (appName.contains(queryNormalized, ignoreCase = true)) {
-                    matches.pushMap(createAppMap(appName, packageName))
-                }
-                // 2. Package name match
-                else if (packageName.contains(queryNormalized, ignoreCase = true)) {
-                    matches.pushMap(createAppMap(appName, packageName))
-                }
-                // 3. Alias check (YouTube.com)
-                else if (queryNormalized.lowercase() == "youtube" &&
-                    packageName.startsWith("com.google.android.youtube")
-                ) {
+                if (appName.lowercase().contains(queryLower) ||
+                    packageName.lowercase().contains(queryLower)) {
+
                     matches.pushMap(createAppMap(appName, packageName))
                 }
             }
 
             promise.resolve(matches)
         } catch (e: Exception) {
-            android.util.Log.e("SEARCH_APPS", "Search failed for '$query': ${e.message}")
             promise.reject("SEARCH_ERROR", "App search failed: ${e.message}")
         }
     }
@@ -176,42 +149,35 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
 
-    // Enhanced openApp: explicit component-based launching, robust error handling
     @ReactMethod
-    fun openApp(packageName: String, promise: Promise) {
+    fun openApp(packageNameToOpen: String, promise: Promise) {
         try {
-            val context = reactApplicationContext
-            val pm = context.packageManager
+            val pm = reactApplicationContext.packageManager
             val mainIntent = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
 
-            val launchables = pm.queryIntentActivities(mainIntent, android.content.pm.PackageManager.MATCH_ALL)
-            var targetInfo: android.content.pm.ResolveInfo? = null
-
-            // Find matching app
-            for (resolveInfo in launchables) {
-                if (resolveInfo.activityInfo.packageName == packageName) {
-                    targetInfo = resolveInfo
-                    break
-                }
+            // Find matching launchable app
+            val launchableApps = pm.queryIntentActivities(mainIntent, android.content.pm.PackageManager.MATCH_ALL)
+            val targetApp = launchableApps.find {
+                it.activityInfo.packageName == packageNameToOpen
             }
 
-            targetInfo?.let {
-                val activityInfo = it.activityInfo
-                val name = android.content.ComponentName(activityInfo.packageName, activityInfo.name)
-                val intent = Intent(Intent.ACTION_MAIN).apply {
+            targetApp?.let { app ->
+                val activityInfo = app.activityInfo
+                val component = android.content.ComponentName(activityInfo.packageName, activityInfo.name)
+                val launchIntent = Intent(Intent.ACTION_MAIN).apply {
                     addCategory(Intent.CATEGORY_LAUNCHER)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-                    component = name
+                    component = component
                 }
-                context.startActivity(intent)
+                reactApplicationContext.startActivity(launchIntent)
                 promise.resolve(true)
             } ?: run {
-                promise.reject("APP_NOT_FOUND", "Package $packageName not found")
+                promise.reject("APP_NOT_FOUND", "No launchable activity found for package $packageNameToOpen")
             }
         } catch (e: Exception) {
-            promise.reject("LAUNCH_ERROR", "Failed to launch app: ${e.message}")
+            promise.reject("OPEN_ERROR", "Failed to open app: ${e.message}")
         }
     }
 
