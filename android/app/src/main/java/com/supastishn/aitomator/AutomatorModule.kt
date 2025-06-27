@@ -107,7 +107,7 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
 
-    // Implement searchApps
+    // Revised searchApps function
     @ReactMethod
     fun searchApps(query: String, promise: Promise) {
         try {
@@ -115,61 +115,37 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val pm = context.packageManager
             val apps = pm.getInstalledApplications(0)
             val matches = Arguments.createArray()
-            val packageList = mutableListOf<WritableMap>()
 
-            // Simple cache for app names
-            val appNameCache = mutableMapOf<String, String>()
+            // Check if query is a package name (contains dot)
+            val isPackageName = query.contains(".")
 
             for (appInfo in apps) {
                 val packageName = appInfo.packageName
-
-                // Skip system/internal packages
-                if (packageName.startsWith("com.android.internal.") || packageName.startsWith("android.")
-                    || packageName.startsWith("oem.") || packageName.startsWith("vendor.")) {
-                    continue
-                }
-
                 val appName = try {
-                    appNameCache[packageName] ?: appInfo.loadLabel(pm).toString().also {
-                        appNameCache[packageName] = it
-                    }
+                    appInfo.loadLabel(pm).toString()
                 } catch (e: Exception) {
                     packageName
                 }
 
-                // Check app name or package name matches query 
-                // (including partial case-insensitive matches)
-                val queryLower = query.lowercase()
-                if (appName.lowercase().contains(queryLower) ||
-                    packageName.lowercase().contains(queryLower)) {
+                // Prioritize direct package name match
+                if (isPackageName && packageName.equals(query, ignoreCase = true)) {
+                    val appMap = Arguments.createMap()
+                    appMap.putString("appName", appName)
+                    appMap.putString("packageName", packageName)
+                    matches.pushMap(appMap)
+                    promise.resolve(matches)
+                    return
+                }
 
-                    // Skip plugins and system components
-                    if (appName == "Android System" ||
-                        appName.lowercase().contains("overlay") ||
-                        appName.lowercase().contains("resources") ||
-                        appName.lowercase().contains("compat") ||
-                        appName.lowercase().contains("plugin")) {
-                        continue
-                    }
+                // Include app if name or package contains query (case-insensitive)
+                if (appName.contains(query, true) ||
+                    packageName.contains(query, true)) {
 
                     val appMap = Arguments.createMap()
                     appMap.putString("appName", appName)
                     appMap.putString("packageName", packageName)
-                    packageList.add(appMap)
+                    matches.pushMap(appMap)
                 }
-            }
-
-            // Sort by likely relevance (name matches first, then package)
-            val queryLower = query.lowercase()
-            val sortedList = packageList.sortedBy {
-                val appWeight = if (it.getString("appName").orEmpty().lowercase().contains(queryLower)) 0 else 1
-                val pkgWeight = if (it.getString("packageName").orEmpty().lowercase().contains(queryLower)) 2 else 3
-                appWeight + pkgWeight
-            }
-
-            // Return top 30 matches
-            for (appMap in sortedList.take(30)) {
-                matches.pushMap(appMap)
             }
 
             promise.resolve(matches)
