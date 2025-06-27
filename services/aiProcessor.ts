@@ -108,6 +108,20 @@ const TOOLS = [
         required: ["packageName"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "open_link",
+      description: "Opens the specified URL in browser or app. Use this if app cannot be found through search",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string" }
+        },
+        required: ["url"]
+      }
+    }
   }
 ];
 
@@ -147,6 +161,7 @@ RULES:
 3. Each subtask must describe one action in 3-7 words
 4. Subtasks must be achievable using available actions
 5. Consider current screen for initial actions
+6. If an app cannot be found through search_apps, use open_link with the appropriate URL instead
 
 TASK: "${task}"`
     }]
@@ -426,6 +441,17 @@ async function executeSubtask(
                 console.log(`Tool call ${toolCall.id} result:`, resultText);
                 throw new Error(args.error);
               }
+            } else if (name === 'open_link') {
+              await AutomatorModule.openLink(args.url);
+              const newScreenshot = await AutomatorModule.takeScreenshot();
+              updateScreenshot(newScreenshot);
+              lastScreenshot = newScreenshot;
+              messages.push({
+                role: "tool",
+                content: "Link opened successfully",
+                tool_call_id: toolCall.id
+              });
+              break;
             } else {
               // Update screenshot after each action
               const newScreenshot = await AutomatorModule.takeScreenshot();

@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import android.content.Intent
+import android.net.Uri
 import com.facebook.react.module.annotations.ReactModule
 
 @ReactModule(name = "AutomatorModule")
@@ -207,6 +208,19 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             promise.resolve(isEnabled)
         } catch (e: Exception) {
             promise.reject("ACCESSIBILITY_CHECK_ERROR", e.message)
+        }
+    }
+
+    @ReactMethod
+    fun openLink(url: String, promise: Promise) {
+        try {
+            val context = currentActivity ?: reactApplicationContext
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("OPEN_LINK_ERROR", e.message)
         }
     }
 }
