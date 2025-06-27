@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Size
+import android.util.Log
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -50,6 +51,7 @@ class AutomatorService : AccessibilityService() {
     }
 
     fun simulateTap(x: Float, y: Float) {
+        Log.d("AutoMateDebug", "Executing tap at: ($x, $y) px")
         val size = screenSize
         val maxX = size.width.toFloat()
         val maxY = size.height.toFloat()
@@ -67,6 +69,8 @@ class AutomatorService : AccessibilityService() {
     }
 
     fun performSwipe(breakpoints: List<Pair<Float, Float>>) {
+        val coords = breakpoints.joinToString(" -> ") { "(${it.first}, ${it.second})" }
+        Log.d("AutoMateDebug", "Executing swipe: $coords px | Duration: ${calculateSwipeDuration(breakpoints)}ms")
         val size = screenSize
         val path = Path()
         if (breakpoints.isEmpty()) return

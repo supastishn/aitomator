@@ -51,6 +51,12 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val screenX = x * size.width
             val screenY = y * size.height
 
+            // Add debug log
+            Log.d("AutoMateDebug",
+                "Touch: normalized ($x, $y) -> pixels ($screenX, $screenY) " +
+                "amount: $amount, spacing: ${spacing}ms"
+            )
+
             for (i in 0 until amount) {
                 service.simulateTap(screenX, screenY)
                 if (spacing > 0 && i < amount - 1) {
@@ -72,15 +78,29 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
             val size = service.screenSize
             val points = mutableListOf<Pair<Float, Float>>()
+            val normPoints = mutableListOf<String>()  // For logging
+            val pixelPoints = mutableListOf<String>() // For logging
 
             for (i in 0 until breakpoints.size()) {
                 val point = breakpoints.getMap(i) ?: continue  // Skip if null
                 if (!point.hasKey("x") || !point.hasKey("y")) continue  // Skip if coords missing
 
-                val x = point.getDouble("x").toFloat() * size.width
-                val y = point.getDouble("y").toFloat() * size.height
-                points.add(Pair(x, y))
+                val normX = point.getDouble("x").toFloat()
+                val normY = point.getDouble("y").toFloat()
+                val pixelX = normX * size.width
+                val pixelY = normY * size.height
+                points.add(Pair(pixelX, pixelY))
+                normPoints.add("($normX, $normY)")
+                pixelPoints.add("($pixelX, $pixelY)")
             }
+
+            // Add debug log
+            Log.d("AutoMateDebug",
+                "Swipe: ${breakpoints.size()} breakpoints\n" +
+                "Normalized: ${normPoints.joinToString(" -> ")}\n" +
+                "Pixels: ${pixelPoints.joinToString(" -> ")}"
+            )
+
             service.performSwipe(points)
             promise.resolve(true)
         } catch (e: Exception) {
