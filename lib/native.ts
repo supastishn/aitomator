@@ -13,7 +13,8 @@ interface AutomatorInterface extends NativeModule {
     searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
     openApp: (packageName: string) => Promise<void>;
     takeScreenshot: () => Promise<string>;
-    openLink: (url: string) => Promise<void>;  // Add this
+    openLink: (url: string) => Promise<void>;
+    getScreenDimensions: () => Promise<{ width: number; height: number }>;
 }
 
 const noopModule: AutomatorInterface = {
@@ -24,14 +25,16 @@ const noopModule: AutomatorInterface = {
     searchApps: async () => [],
     openApp: async () => {},
     takeScreenshot: async () => 'mock-uri',
-    openLink: async () => {},  // Add mock implementation
+    openLink: async () => {},
+    getScreenDimensions: async () => ({ width: 1080, height: 1920 }),
 };
 
-// Check if all required methods are present
+ // Check if all required methods are present
 const isValidModule = AutomatorModule && 
     typeof AutomatorModule.isAccessibilityServiceEnabled === 'function' &&
     typeof AutomatorModule.performTouch === 'function' &&
-    typeof AutomatorModule.takeScreenshot === 'function';
+    typeof AutomatorModule.takeScreenshot === 'function' &&
+    typeof AutomatorModule.getScreenDimensions === 'function';
 
 // Export either the real module or fallback
 export default isValidModule ? AutomatorModule as AutomatorInterface : noopModule;
