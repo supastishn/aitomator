@@ -108,42 +108,62 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
 
-    // Enhanced app search: prioritizes app name matches, sorts alphabetically, robust error handling
+    // Intent-based app search: prioritizes app name matches, sorts alphabetically, robust error handling, explicit YouTube alias
     @ReactMethod
     fun searchApps(query: String, promise: Promise) {
         try {
             val queryNormalized = query.trim()
+            android.util.Log.d("SEARCH_APPS", "Searching for: $queryNormalized")
+            if (queryNormalized.isEmpty()) {
+                promise.resolve(com.facebook.react.bridge.Arguments.createArray())
+                return
+            }
+
             val context = reactApplicationContext
             val pm = context.packageManager
 
-            val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
+            // Create MAIN+LAUNCHER intent
+            val mainIntent = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
 
-            val launchableApps = pm.queryIntentActivities(mainIntent, android.content.pm.PackageManager.MATCH_ALL)
-            val matches = Arguments.createArray()
-            val defaultComparator = android.content.pm.ResolveInfo.DisplayNameComparator(pm)
+            // Use new MATCH_ALL flag for modern Android
+            val launchableApps = pm.queryIntentActivities(
+                mainIntent,
+                android.content.pm.PackageManager.MATCH_ALL or android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
+            )
+            android.util.Log.d("SEARCH_APPS", "Total launchable apps: ${launchableApps.size}")
 
-            // Sort alphabetically by display name
-            java.util.Collections.sort(launchableApps, defaultComparator)
+            val matches = com.facebook.react.bridge.Arguments.createArray()
+            val comparator = android.content.pm.ResolveInfo.DisplayNameComparator(pm)
+
+            // Sort alphabetically
+            java.util.Collections.sort(launchableApps, comparator)
 
             for (resolveInfo in launchableApps) {
                 val activityInfo = resolveInfo.activityInfo
                 val packageName = activityInfo.packageName
                 val appName = resolveInfo.loadLabel(pm).toString()
 
-                // Prioritize app name matches first
+                // 1. Direct match check (app name)
                 if (appName.contains(queryNormalized, ignoreCase = true)) {
                     matches.pushMap(createAppMap(appName, packageName))
                 }
-                // Then package name matches
+                // 2. Package name match
                 else if (packageName.contains(queryNormalized, ignoreCase = true)) {
+                    matches.pushMap(createAppMap(appName, packageName))
+                }
+                // 3. Alias check (YouTube.com)
+                else if (queryNormalized.lowercase() == "youtube" &&
+                    packageName.startsWith("com.google.android.youtube")
+                ) {
                     matches.pushMap(createAppMap(appName, packageName))
                 }
             }
 
             promise.resolve(matches)
         } catch (e: Exception) {
+            android.util.Log.e("SEARCH_APPS", "Search failed for '$query': ${e.message}")
             promise.reject("SEARCH_ERROR", "App search failed: ${e.message}")
         }
     }
