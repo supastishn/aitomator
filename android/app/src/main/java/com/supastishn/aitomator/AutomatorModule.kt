@@ -113,19 +113,21 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         try {
             val context = reactApplicationContext
             val pm = context.packageManager
-            val apps = pm.getInstalledApplications(0)
+            
+            // Get only launchable apps
+            val mainIntent = Intent(Intent.ACTION_MAIN, null)
+            mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
+            val launchableApps = pm.queryIntentActivities(mainIntent, 0)
+
             val matches = Arguments.createArray()
 
             // Check if query is a package name (contains dot)
             val isPackageName = query.contains(".")
 
-            for (appInfo in apps) {
-                val packageName = appInfo.packageName
-                val appName = try {
-                    appInfo.loadLabel(pm).toString()
-                } catch (e: Exception) {
-                    packageName
-                }
+            for (resolveInfo in launchableApps) {
+                val activityInfo = resolveInfo.activityInfo
+                val packageName = activityInfo.packageName
+                val appName = resolveInfo.loadLabel(pm).toString()
 
                 // Prioritize direct package name match
                 if (isPackageName && packageName.equals(query, ignoreCase = true)) {
