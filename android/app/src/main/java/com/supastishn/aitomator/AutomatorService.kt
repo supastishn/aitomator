@@ -2,11 +2,15 @@ package com.supastishn.aitomator
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
+import android.content.Context
 import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.util.Size
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
@@ -15,11 +19,17 @@ class AutomatorService : AccessibilityService() {
 
     // Get dimensions safely with fallbacks
     private fun getScreenDimensions(): Size {
+        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         return try {
-            Size(
-                resources.displayMetrics.widthPixels,
-                resources.displayMetrics.heightPixels
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val bounds = windowManager.currentWindowMetrics.bounds
+                Size(bounds.width(), bounds.height())
+            } else {
+                val displayMetrics = DisplayMetrics()
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay.getMetrics(displayMetrics)
+                Size(displayMetrics.widthPixels, displayMetrics.heightPixels)
+            }
         } catch (e: Exception) {
             // Use common screen dimensions as fallback
             Size(1080, 1920)

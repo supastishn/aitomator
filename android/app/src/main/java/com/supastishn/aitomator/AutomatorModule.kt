@@ -46,10 +46,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         try {
             val service = AutomatorService.getInstance()
                 ?: throw Exception("Service unavailable")
-            service.screenSize
-                ?: throw Exception("Screen size unavailable")
 
-            val size = service.screenSize!!
+            val size = service.screenSize
             val screenX = x * size.width
             val screenY = y * size.height
 
@@ -71,10 +69,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         try {
             val service = AutomatorService.getInstance()
                 ?: throw Exception("Service unavailable")
-            service.screenSize
-                ?: throw Exception("Screen size unavailable")
 
-            val size = service.screenSize!!
+            val size = service.screenSize
             val points = mutableListOf<Pair<Float, Float>>()
 
             for (i in 0 until breakpoints.size()) {
