@@ -11,7 +11,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 class AutomatorService : AccessibilityService() {
-    var screenSize: Size? = null  // Initialize as nullable
+    val screenSize: Size by lazy { getScreenDimensions() }
 
     // Get dimensions safely with fallbacks
     private fun getScreenDimensions(): Size {
@@ -37,53 +37,50 @@ class AutomatorService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        screenSize = getScreenDimensions()  // Get dimensions when service is ready
     }
 
     fun simulateTap(x: Float, y: Float) {
-        screenSize?.let { size ->
-            val maxX = size.width.toFloat()
-            val maxY = size.height.toFloat()
-            
-            if (x < 0 || x > maxX || y < 0 || y > maxY) {
-                throw Exception("Coordinates ($x,$y) out of bounds for screen $maxX,$maxY")
-            }
-            
-            val path = Path()
-            path.moveTo(x, y)
-            val gesture = GestureDescription.Builder()
-                .addStroke(GestureDescription.StrokeDescription(path, 0, 10))
-                .build()
-            dispatchGesture(gesture, null, null)
-        } ?: throw Exception("Screen size unavailable - service not initialized")
+        val size = screenSize
+        val maxX = size.width.toFloat()
+        val maxY = size.height.toFloat()
+        
+        if (x < 0 || x > maxX || y < 0 || y > maxY) {
+            throw Exception("Coordinates ($x,$y) out of bounds for screen $maxX,$maxY")
+        }
+        
+        val path = Path()
+        path.moveTo(x, y)
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 10))
+            .build()
+        dispatchGesture(gesture, null, null)
     }
 
     fun performSwipe(breakpoints: List<Pair<Float, Float>>) {
-        screenSize?.let { size ->
-            val path = Path()
-            if (breakpoints.isEmpty()) return
+        val size = screenSize
+        val path = Path()
+        if (breakpoints.isEmpty()) return
 
-            // MOVE TO FIRST POINT
-            path.moveTo(breakpoints[0].first, breakpoints[0].second)
+        // MOVE TO FIRST POINT
+        path.moveTo(breakpoints[0].first, breakpoints[0].second)
 
-            // ADD ALL SUBSEQUENT POINTS
-            for (i in 1 until breakpoints.size) {
-                path.lineTo(breakpoints[i].first, breakpoints[i].second)
-            }
+        // ADD ALL SUBSEQUENT POINTS
+        for (i in 1 until breakpoints.size) {
+            path.lineTo(breakpoints[i].first, breakpoints[i].second)
+        }
 
-            val gesture = GestureDescription.Builder()
-                .addStroke(
-                    GestureDescription.StrokeDescription(
-                        path,
-                        0,
-                        // CALCULATE DURATION BASED ON DISTANCE
-                        calculateSwipeDuration(breakpoints)
-                    )
+        val gesture = GestureDescription.Builder()
+            .addStroke(
+                GestureDescription.StrokeDescription(
+                    path,
+                    0,
+                    // CALCULATE DURATION BASED ON DISTANCE
+                    calculateSwipeDuration(breakpoints)
                 )
-                .build()
+            )
+            .build()
 
-            dispatchGesture(gesture, null, null)
-        } ?: throw Exception("Screen size unavailable - service not initialized")
+        dispatchGesture(gesture, null, null)
     }
 
     // ADD DURATION CALCULATION HELPER
@@ -116,7 +113,6 @@ class AutomatorService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         instance = null
-        screenSize = null  // Clean up on destroy
     }
 
     companion object {
