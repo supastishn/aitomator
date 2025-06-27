@@ -37,24 +37,11 @@ export default function SettingsScreen() {
   const [functionResult, setFunctionResult] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Screen dimensions state
-  const [screenDimensions, setScreenDimensions] = useState<ScreenDimensions | null>(null);
+  // Screen dimensions
+  const { width, height } = useWindowDimensions();
 
   useEffect(() => {
     loadSettings();
-  }, []);
-
-  useEffect(() => {
-    const fetchDimensions = async () => {
-      try {
-        const dims = await AutomatorModule.getScreenDimensions();
-        setScreenDimensions(dims);
-      } catch (error) {
-        console.error('Failed to get screen dimensions:', error);
-      }
-    };
-
-    fetchDimensions();
   }, []);
 
   const loadSettings = async () => {
@@ -329,15 +316,12 @@ export default function SettingsScreen() {
             isExpanded={isExpanded}
             onToggle={() => setIsExpanded(!isExpanded)}
           >
-            {/* Screen dimensions display */}
-            {screenDimensions && (
-              <View style={styles.debugInfoContainer}>
-                <Text style={styles.debugLabel}>Screen Dimensions:</Text>
-                <Text style={styles.debugText}>
-                  {screenDimensions.width} x {screenDimensions.height} px
-                </Text>
-              </View>
-            )}
+            <View style={styles.debugInfoContainer}>
+              <Text style={styles.debugLabel}>Screen Dimensions:</Text>
+              <Text style={styles.debugText}>
+                {width} x {height} px
+              </Text>
+            </View>
 
             <Text style={styles.debugTitle}>Test LLM Functions</Text>
             
