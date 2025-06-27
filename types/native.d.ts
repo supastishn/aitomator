@@ -1,6 +1,11 @@
 declare module 'native' {
   import { NativeModule } from 'react-native';
 
+  export type ScreenDimensions = {
+    width: number;
+    height: number;
+  };
+
   export interface AutomatorInterface extends NativeModule {
     takeScreenshot: () => Promise<string>;
     performTouch: (x: number, y: number, amount?: number, spacing?: number) => Promise<void>;
@@ -9,6 +14,7 @@ declare module 'native' {
     searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
     openApp: (packageName: string) => Promise<void>;
     isAccessibilityServiceEnabled: () => Promise<boolean>;
+    getScreenDimensions: () => Promise<ScreenDimensions>;
   }
 
   const AutomatorModule: AutomatorInterface;

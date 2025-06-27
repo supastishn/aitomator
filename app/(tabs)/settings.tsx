@@ -9,11 +9,17 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Dimensions, // Add this import
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
 import { Collapsible } from '@/components/Collapsible';
 import AutomatorModule from '@/lib/native';
+
+type ScreenDimensions = {
+  width: number;
+  height: number;
+};
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
@@ -31,8 +37,24 @@ export default function SettingsScreen() {
   const [functionResult, setFunctionResult] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Screen dimensions state
+  const [screenDimensions, setScreenDimensions] = useState<ScreenDimensions | null>(null);
+
   useEffect(() => {
     loadSettings();
+  }, []);
+
+  useEffect(() => {
+    const fetchDimensions = async () => {
+      try {
+        const dims = await AutomatorModule.getScreenDimensions();
+        setScreenDimensions(dims);
+      } catch (error) {
+        console.error('Failed to get screen dimensions:', error);
+      }
+    };
+
+    fetchDimensions();
   }, []);
 
   const loadSettings = async () => {
@@ -307,6 +329,16 @@ export default function SettingsScreen() {
             isExpanded={isExpanded}
             onToggle={() => setIsExpanded(!isExpanded)}
           >
+            {/* Screen dimensions display */}
+            {screenDimensions && (
+              <View style={styles.debugInfoContainer}>
+                <Text style={styles.debugLabel}>Screen Dimensions:</Text>
+                <Text style={styles.debugText}>
+                  {screenDimensions.width} x {screenDimensions.height} px
+                </Text>
+              </View>
+            )}
+
             <Text style={styles.debugTitle}>Test LLM Functions</Text>
             
             <Text style={styles.debugHint}>
@@ -547,6 +579,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     opacity: 0.8,
   },
+  debugInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  debugLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+    color: '#11181C',
+    marginBottom: 4,
+  },
+  debugText: {
+    fontSize: 14,
+    color: '#687076',
+  },
   debugTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -555,11 +603,6 @@ const styles = StyleSheet.create({
   },
   debugInputContainer: {
     marginVertical: 8,
-  },
-  debugLabel: {
-    fontSize: 14,
-    marginBottom: 4,
-    color: '#11181C',
   },
   debugInput: {
     borderWidth: 1,

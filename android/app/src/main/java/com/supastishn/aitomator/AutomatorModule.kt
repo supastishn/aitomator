@@ -205,4 +205,27 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             promise.reject("OPEN_LINK_ERROR", e.message)
         }
     }
+
+    @ReactMethod
+    fun getScreenDimensions(promise: Promise) {
+        try {
+            val windowManager = reactApplicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val size = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val bounds = windowManager.currentWindowMetrics.bounds
+                Pair(bounds.width(), bounds.height())
+            } else {
+                val displayMetrics = DisplayMetrics()
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay.getMetrics(displayMetrics)
+                Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
+            }
+
+            val dimensions = Arguments.createMap()
+            dimensions.putInt("width", size.first)
+            dimensions.putInt("height", size.second)
+            promise.resolve(dimensions)
+        } catch (e: Exception) {
+            promise.reject("DIMENSIONS_ERROR", "Failed to get screen dimensions", e)
+        }
+    }
 }
