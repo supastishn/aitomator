@@ -17,24 +17,5 @@ interface AutomatorInterface extends NativeModule {
     getScreenDimensions: () => Promise<{ width: number; height: number }>;
 }
 
-const noopModule: AutomatorInterface = {
-    isAccessibilityServiceEnabled: async () => false,
-    performTouch: async () => ({ x: 0, y: 0 }),
-    performSwipe: async () => {},
-    typeText: async () => {},
-    searchApps: async () => [],
-    openApp: async () => {},
-    takeScreenshot: async () => 'mock-uri',
-    openLink: async () => {},
-    getScreenDimensions: async () => ({ width: 1080, height: 1920 }),
-};
-
- // Check if all required methods are present
-const isValidModule = AutomatorModule && 
-    typeof AutomatorModule.isAccessibilityServiceEnabled === 'function' &&
-    typeof AutomatorModule.performTouch === 'function' &&
-    typeof AutomatorModule.takeScreenshot === 'function' &&
-    typeof AutomatorModule.getScreenDimensions === 'function';
-
-// Export either the real module or fallback
-export default isValidModule ? AutomatorModule as AutomatorInterface : noopModule;
+// Always use the real module directly
+export default AutomatorModule as AutomatorInterface;
