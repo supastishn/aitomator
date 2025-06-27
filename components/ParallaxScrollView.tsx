@@ -49,19 +49,23 @@ export default function ParallaxScrollView({
         scrollEventThrottle={16}
         scrollIndicatorInsets={{ bottom }}
         contentContainerStyle={{ paddingBottom: bottom }}>
-        <Animated.View
-          style={[
-            styles.header,
-            headerBackgroundColor
-              ? { backgroundColor: headerBackgroundColor.light }
-              : { backgroundColor: '#FFF' },
-            headerAnimatedStyle,
-          ]}>
-          {headerImage}
-        </Animated.View>
+        {/* Only render header if headerImage is provided */}
+        {headerImage && (
+          <Animated.View
+            style={[
+              styles.header,
+              headerBackgroundColor
+                ? { backgroundColor: headerBackgroundColor.light }
+                : { backgroundColor: '#FFF' },
+              headerAnimatedStyle,
+            ]}>
+            {headerImage}
+          </Animated.View>
+        )}
         <View
           style={[
             styles.content,
+            // Always show content padding (32px) when there's no header
             !headerImage && { paddingTop: 32 },
           ]}
         >
