@@ -9,17 +9,12 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  Dimensions, // Add this import
 } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
 import { Collapsible } from '@/components/Collapsible';
 import AutomatorModule from '@/lib/native';
-
-type ScreenDimensions = {
-  width: number;
-  height: number;
-};
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<OpenAISettings>({
