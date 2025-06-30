@@ -20,6 +20,7 @@ declare module 'native' {
     openApp: (packageName: string) => Promise<void>;
     isAccessibilityServiceEnabled: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
+    openLink: (url: string) => Promise<void>; // Add this line
   }
 
   const AutomatorModule: AutomatorInterface;
