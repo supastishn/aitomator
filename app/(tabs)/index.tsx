@@ -33,12 +33,7 @@ export default function HomeScreen() {
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
 
-  // Debug mode states
-  const [debugMode, setDebugMode] = useState(false);
-  const [swipePoints, setSwipePoints] = useState<Point[]>([]);
-  const [currentCommand, setCurrentCommand] = useState('');
   const previewLayout = useRef({ x: 0, y: 0, width: 1, height: 1 });
-  const [gestureStarted, setGestureStarted] = useState(false);
 
   useEffect(() => {
     if (isReady) {
@@ -127,54 +122,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Debug helpers
-  const calculateNormalizedPosition = (event: any) => {
-    const tx = event.nativeEvent.pageX - previewLayout.current.x;
-    const ty = event.nativeEvent.pageY - previewLayout.current.y;
-    return {
-      x: Math.max(0, Math.min(1, tx / previewLayout.current.width)),
-      y: Math.max(0, Math.min(1, ty / previewLayout.current.height)),
-    };
-  };
-
-  const handleTap = (pt: Point) => {
-    setCurrentCommand(
-      `touch({ x: ${pt.x.toFixed(3)}, y: ${pt.y.toFixed(3)}, num: 1 })`
-    );
-  };
-
-  const handleSwipe = (points: Point[]) => {
-    const formatted = points.map(p => `{
-  x: ${p.x.toFixed(3)},
-  y: ${p.y.toFixed(3)}
-}`).join(',');
-    setCurrentCommand(`swipe({ breakpoints: [${formatted}] })`);
-  };
-
-  // Enhanced panResponder for gesture feedback
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => debugMode,
-    onMoveShouldSetPanResponder: () => debugMode,
-    onPanResponderGrant: (e) => {
-      setGestureStarted(true);
-      const point = calculateNormalizedPosition(e);
-      setSwipePoints([point]);
-    },
-    onPanResponderMove: (e) => {
-      const point = calculateNormalizedPosition(e);
-      setSwipePoints(prev => [...prev, point]);
-    },
-    onPanResponderRelease: () => {
-      setGestureStarted(false);
-      if (swipePoints.length < 2) {
-        if (swipePoints[0]) handleTap(swipePoints[0]);
-      } else {
-        handleSwipe(swipePoints);
-      }
-      setSwipePoints([]);
-    },
-  });
-
   return (
   <View style={styles.container}>
     <View style={styles.headerSection}>
@@ -227,55 +174,11 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      <View style={styles.debugSection}>
-        <View style={styles.debugHeader}>
-          <Text style={styles.sectionTitle}>Debug Mode</Text>
-          <TouchableOpacity
-            style={[
-              styles.debugButton,
-              {
-                backgroundColor: debugMode ? '#ef4444' : '#8b5cf6',
-                shadowColor: debugMode ? '#ef4444' : '#8b5cf6'
-              }
-            ]}
-            onPress={() => setDebugMode(!debugMode)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.debugButtonText}>
-              {debugMode ? 'Exit Debug' : 'Enable Debug'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {debugMode && (
-          <Text style={styles.debugHint}>
-            Tap or swipe on the screenshot below to generate automation commands
-          </Text>
-        )}
-      </View>
 
       {screenshotUri && (
         <View style={styles.previewSection}>
           <Text style={styles.sectionTitle}>Screen Preview</Text>
-          <View
-            style={[
-              styles.previewContainer,
-              { borderColor: debugMode ? '#8b5cf6' : '#e2e8f0' }
-            ]}
-            onLayout={e => previewLayout.current = e.nativeEvent.layout}
-            {...panResponder.panHandlers}
-          >
-            {debugMode && gestureStarted && swipePoints.length > 0 && (
-              <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-                <Polyline
-                  points={swipePoints.map(p =>
-                    `${p.x * previewLayout.current.width},${p.y * previewLayout.current.height}`
-                  ).join(' ')}
-                  stroke="#8b5cf6"
-                  strokeWidth="4"
-                  fill="none"
-                />
-              </Svg>
-            )}
+          <View style={styles.previewContainer}>
             <Image
               source={{ uri: screenshotUri }}
               style={styles.preview}
@@ -285,27 +188,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {currentCommand && (
-        <View style={styles.commandSection}>
-          <View style={styles.commandHeader}>
-            <Text style={styles.commandTitle}>Generated Command</Text>
-            <TouchableOpacity
-              style={styles.copyButton}
-              onPress={() => Clipboard.setString(currentCommand)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.copyButtonText}>Copy</Text>
-            </TouchableOpacity>
-          </View>
-          <TextInput
-            value={currentCommand}
-            style={styles.commandInput}
-            multiline
-            editable={false}
-            scrollEnabled={true}
-          />
-        </View>
-      )}
     </ScrollView>
   </View>
 );
@@ -418,42 +300,6 @@ const styles = StyleSheet.create({
   statusTextActive: {
     color: '#059669',
     fontWeight: '500',
-  },
-  debugSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  debugHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  debugButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  debugButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  debugHint: {
-    fontSize: 14,
-    color: '#64748b',
-    fontStyle: 'italic',
-    marginTop: 8,
   },
   previewSection: {
     backgroundColor: '#ffffff',
