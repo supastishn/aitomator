@@ -45,6 +45,7 @@ export default function HomeScreen() {
 
   // Improved accessibility prompt and retry logic
   const promptAccessibility = () => {
+    console.debug("[Service] Prompting user to enable accessibility");
     Alert.alert(
       "Permission Required",
       "AutoMate needs accessibility permissions to work. You MUST manually enable it in system settings and RESTART THE APP:",
@@ -63,6 +64,7 @@ export default function HomeScreen() {
 
   // Add this retry function with polling
   const retryAccessibilityCheck = async () => {
+    console.debug("[Service] Retrying accessibility check");
     try {
       let isReady = false;
       let attempts = 0;
@@ -84,8 +86,7 @@ export default function HomeScreen() {
         attempts++;
 
         // Add debug logging
-        console.log(
-          `Accessibility check attempt ${attempts}: ` +
+        console.debug(`[Service] Retry attempt ${attempts}: ` +
           `Config=${settingsEnabled}, Service=${connected}`
         );
 
@@ -102,20 +103,32 @@ export default function HomeScreen() {
         '\n\nPlease restart the app'
       );
     } catch (error: any) {
-      Alert.alert('Error', `Service check failed: ${error.message}`);
+      console.error(`[Service] Retry failed: ${error.message}`);
+      Alert.alert('Service Error', 'Failed to verify accessibility status');
     }
   };
 
   // Updated startAutomation to require accessibility service before running
   const startAutomation = async (force = false) => {
     try {
+      console.debug("[Automation] Starting workflow");
+      
       // First check service connection
       const [isEnabled, isConnected] = await Promise.all([
         AutomatorModule.isAccessibilityServiceEnabled(),
         AutomatorModule.isServiceConnected()
       ]);
 
+      console.debug(
+        `[Service] Automation precondition: ` +
+        `Enabled=${isEnabled}, Connected=${isConnected}`
+      );
+
       if (!isEnabled || !isConnected) {
+        console.warn(
+          "[Service] Automation blocked - service not ready: " + 
+          `Enabled=${isEnabled}, Connected=${isConnected}`
+        );
         promptAccessibility();
         return;
       }

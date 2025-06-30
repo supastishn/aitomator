@@ -10,14 +10,24 @@ export default function useAccessibilityCheck() {
     setIsReady(false);
     setError(null);
 
+    console.debug("[Service] Starting accessibility check");
+
     try {
       // Add full status object with separate flags
       const [settingsEnabled, connected] = await Promise.all([
         AutomatorModule.isAccessibilityServiceEnabled(),
         AutomatorModule.isServiceConnected()
       ]);
-      setIsEnabled(settingsEnabled && connected);
+
+      const serviceReady = settingsEnabled && connected;
+      setIsEnabled(serviceReady);
+
+      console.debug(
+        `[Service] Status - Config: ${settingsEnabled}, ` +
+        `Connection: ${connected}, Service Ready: ${serviceReady}`
+      );
     } catch (err: any) {
+      console.error(`[Service] Check failed: ${err.message || 'Unknown error'}`);
       setError(`Accessibility check failed: ${err.message || 'Unknown error'}`);
     } finally {
       setIsReady(true);

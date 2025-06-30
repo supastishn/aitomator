@@ -261,10 +261,14 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                 id.equals(shortName, ignoreCase = true)
             }
 
-            android.util.Log.d("AutoMateDebug", "Service enabled: $serviceEnabled")
+            // Add improved debug log for config check
+            Log.d("AutoMateDebug", 
+                "[Service] Config Check: Enabled=$serviceEnabled, " +
+                "SystemEnabled=$accessibilityEnabled"
+            )
             promise.resolve(serviceEnabled)
         } catch (e: Exception) {
-            android.util.Log.e("AutoMateDebug", "Accessibility check error: ${e.message}")
+            Log.e("AutoMateDebug", "[Service] Config Check Failed: ${e.message}")
             promise.reject("ACCESSIBILITY_CHECK_ERROR", e.message)
         }
     }
@@ -297,8 +301,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun isServiceConnected(promise: Promise) {
         try {
-            promise.resolve(AutomatorService.isConnected())
+            val connected = AutomatorService.isConnected()
+            Log.d("AutoMateDebug", "[Service] Connection Check: $connected")
+            promise.resolve(connected)
         } catch (e: Exception) {
+            Log.e("AutoMateDebug", "[Service] Connection Check Failed: ${e.message}")
             promise.reject("SERVICE_CONNECTION_ERROR", e.message)
         }
     }
