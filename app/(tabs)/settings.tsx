@@ -11,7 +11,6 @@ import {
   Platform,
 } from 'react-native';
 import { useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveOpenAISettings, loadOpenAISettings, clearOpenAISettings, OpenAISettings } from '@/lib/openaiSettings';
 import { Collapsible } from '@/components/Collapsible';
 import AutomatorModule from '@/lib/native';
@@ -134,178 +133,153 @@ export default function SettingsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0a7ea4" />
           <Text style={styles.loadingText}>Loading settings...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              AutoMate Settings
-            </Text>
-            <Text style={styles.subtitle}>
-              Configure your OpenAI API settings for AutoMate
-            </Text>
-          </View>
+    <View style={styles.container}>
+      <View style={styles.headerSection}>
+        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerSubtitle}>
+          Configure your AI automation settings
+        </Text>
+      </View>
+      <ScrollView
+        style={styles.mainContent}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>OpenAI Configuration</Text>
 
-          <View style={styles.section}>
-            <Text style={[styles.label, { fontWeight: '600' }]}>
-              API Key *
-            </Text>
-            <View style={[styles.inputContainer, { borderColor: '#687076' }]}>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: '#11181C', // Fixed dark gray text
-                  },
-                  {
-                    borderColor: '#687076', // Fixed gray border
-                  },
-                ]}
-                value={settings.apiKey}
-                onChangeText={(text) => setSettings({ ...settings, apiKey: text })}
-                placeholder="sk-..."
-                placeholderTextColor="#687076"
-                secureTextEntry={!showApiKey}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={styles.toggleButton}
-                onPress={() => setShowApiKey(!showApiKey)}
-              >
-                <Text style={styles.toggleText}>
-                  {showApiKey ? 'Hide' : 'Show'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.helpText}>
-              Your OpenAI API key. Get one from{' '}
-              <Text style={styles.link}>platform.openai.com</Text>
-            </Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.label, { fontWeight: '600' }]}>
-              Base URL *
-            </Text>
+          <Text style={styles.label}>API Key *</Text>
+          <View style={[styles.inputContainer]}>
             <TextInput
-              style={[
-                styles.input,
-                {
-                  color: '#11181C',
-                },
-                { borderColor: '#687076' },
-              ]}
-              value={settings.baseUrl}
-              onChangeText={(text) => setSettings({ ...settings, baseUrl: text })}
-              placeholder="https://api.openai.com"
-              placeholderTextColor="#687076"
+              style={styles.input}
+              value={settings.apiKey}
+              onChangeText={(text) => setSettings({ ...settings, apiKey: text })}
+              placeholder="sk-..."
+              placeholderTextColor="#94a3b8"
+              secureTextEntry={!showApiKey}
               autoCapitalize="none"
               autoCorrect={false}
-              keyboardType="url"
+              editable={!saving}
             />
-            <Text style={styles.helpText}>
-              OpenAI API base URL. Use custom endpoints for other providers.
-            </Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.label, { fontWeight: '600' }]}>
-              Model *
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: '#11181C',
-                },
-                { borderColor: '#687076' },
-              ]}
-              value={settings.model}
-              onChangeText={(text) => setSettings({ ...settings, model: text })}
-              placeholder="gpt-4o"
-              placeholderTextColor="#687076"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <Text style={styles.helpText}>
-              Model to use for AI automation. Recommended: gpt-4o or gpt-4-vision-preview
-            </Text>
-          </View>
-
-          <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[
-                styles.button,
-                styles.primaryButton,
-                { backgroundColor: '#0a7ea4' }, // Solid blue color
-                saving && styles.disabledButton,
-              ]}
-              onPress={handleSave}
-              disabled={saving}
+              style={styles.toggleButton}
+              onPress={() => setShowApiKey(!showApiKey)}
             >
-              {saving ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text style={styles.buttonText}>Save Settings</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.secondaryButton,
-                {
-                  borderColor: '#0a7ea4',
-                },
-                saving && styles.disabledButton,
-              ]}
-              onPress={testConnection}
-              disabled={saving}
-            >
-              <Text style={[styles.buttonText, { color: '#0a7ea4' }]}>
-                Test Connection
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.dangerButton]}
-              onPress={handleClear}
-            >
-              <Text style={[styles.buttonText, styles.dangerButtonText]}>
-                Clear Settings
+              <Text style={styles.toggleText}>
+                {showApiKey ? 'Hide' : 'Show'}
               </Text>
             </TouchableOpacity>
           </View>
+          <Text style={styles.helpText}>
+            Your OpenAI API key. Get one from{' '}
+            <Text style={styles.link}>platform.openai.com</Text>
+          </Text>
 
-          <View style={styles.infoSection}>
-            <Text style={[styles.infoTitle, { fontWeight: '600' }]}>
-              How it works
-            </Text>
-            <Text style={styles.infoText}>
-              • The app captures screenshots of your device
-            </Text>
-            <Text style={styles.infoText}>
-              • Screenshots are sent to your configured AI model
-            </Text>
-            <Text style={styles.infoText}>
-              • AI analyzes the image and returns touch coordinates
-            </Text>
-            <Text style={styles.infoText}>
-              • The app performs automated touches based on AI instructions
-            </Text>
-          </View>
+          <Text style={styles.label}>Base URL *</Text>
+          <TextInput
+            style={styles.input}
+            value={settings.baseUrl}
+            onChangeText={(text) => setSettings({ ...settings, baseUrl: text })}
+            placeholder="https://api.openai.com"
+            placeholderTextColor="#94a3b8"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            editable={!saving}
+          />
+          <Text style={styles.helpText}>
+            OpenAI API base URL. Use custom endpoints for other providers.
+          </Text>
 
+          <Text style={styles.label}>Model *</Text>
+          <TextInput
+            style={styles.input}
+            value={settings.model}
+            onChangeText={(text) => setSettings({ ...settings, model: text })}
+            placeholder="gpt-4o"
+            placeholderTextColor="#94a3b8"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!saving}
+          />
+          <Text style={styles.helpText}>
+            Model to use for AI automation. Recommended: gpt-4o or gpt-4-vision-preview
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.primaryButton,
+              saving && styles.primaryButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={saving}
+            activeOpacity={0.8}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Save Settings</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.secondaryButton,
+              saving && styles.primaryButtonDisabled,
+            ]}
+            onPress={testConnection}
+            disabled={saving}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.primaryButtonText, { color: '#3b82f6' }]}>
+              Test Connection
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.dangerButton]}
+            onPress={handleClear}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.primaryButtonText, styles.dangerButtonText]}>
+              Clear Settings
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.infoSection}>
+          <Text style={[styles.infoTitle, { fontWeight: '600' }]}>
+            How it works
+          </Text>
+          <Text style={styles.infoText}>
+            • The app captures screenshots of your device
+          </Text>
+          <Text style={styles.infoText}>
+            • Screenshots are sent to your configured AI model
+          </Text>
+          <Text style={styles.infoText}>
+            • AI analyzes the image and returns touch coordinates
+          </Text>
+          <Text style={styles.infoText}>
+            • The app performs automated touches based on AI instructions
+          </Text>
+        </View>
+
+        <View style={styles.section}>
           <Collapsible
             title="LLM Function Debugger"
             isExpanded={isExpanded}
@@ -319,7 +293,7 @@ export default function SettingsScreen() {
             </View>
 
             <Text style={styles.debugTitle}>Test LLM Functions</Text>
-            
+
             <Text style={styles.debugHint}>
               TIP: You can test touch gestures in the home screen debug mode
             </Text>
@@ -327,7 +301,7 @@ export default function SettingsScreen() {
               - Tap to generate touch coordinates{"\n"}
               - Swipe to generate swipe breakpoints
             </Text>
-            
+
             <View style={styles.debugInputContainer}>
               <Text style={styles.debugLabel}>Function Name:</Text>
               <TextInput
@@ -339,7 +313,7 @@ export default function SettingsScreen() {
                 autoCorrect={false}
               />
             </View>
-            
+
             <View style={styles.debugInputContainer}>
               <Text style={styles.debugLabel}>Arguments (JSON):</Text>
               <TextInput
@@ -352,7 +326,7 @@ export default function SettingsScreen() {
                 autoCorrect={false}
               />
             </View>
-            
+
             <TouchableOpacity
               style={[styles.button, styles.debugButton]}
               onPress={async () => {
@@ -367,8 +341,8 @@ export default function SettingsScreen() {
                   switch (functionName) {
                     case "touch":
                       result = await AutomatorModule.performTouch(
-                        args.x, 
-                        args.y, 
+                        args.x,
+                        args.y,
                         args.amount || 1,
                         args.spacing || 0
                       );
@@ -386,20 +360,20 @@ export default function SettingsScreen() {
                     case "open_url":
                       // Get the URL argument (either 'link' or 'url')
                       const urlArg = args.url || args.link;
-                      
+
                       if (!urlArg) {
                         throw new Error('Must provide "url" or "link" parameter');
                       }
-                      
+
                       // Add URL protocol if missing
-                      const fullUrl = urlArg.startsWith('http') 
-                        ? urlArg 
+                      const fullUrl = urlArg.startsWith('http')
+                        ? urlArg
                         : `https://${urlArg}`;
-                      
+
                       await import('expo-web-browser').then(
                         WebBrowser => WebBrowser.openBrowserAsync(fullUrl)
                       );
-                      
+
                       result = "Browser opened successfully";
                       break;
                     case "typeText":
@@ -423,7 +397,7 @@ export default function SettingsScreen() {
                   console.log(`Function ${functionName} result:`, result);
 
                   setFunctionResult(
-                    typeof result === "object" 
+                    typeof result === "object"
                       ? JSON.stringify(result, null, 2)
                       : String(result),
                   );
@@ -435,9 +409,9 @@ export default function SettingsScreen() {
                 }
               }}
             >
-              <Text style={styles.buttonText}>Test Function</Text>
+              <Text style={styles.primaryButtonText}>Test Function</Text>
             </TouchableOpacity>
-            
+
             {functionResult ? (
               <View style={styles.resultContainer}>
                 <Text style={styles.resultLabel}>Result:</Text>
@@ -452,58 +426,81 @@ export default function SettingsScreen() {
           </Collapsible>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
   },
-  scrollView: {
-    flex: 1,
+  headerSection: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  content: {
-    padding: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  title: {
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1e293b',
     marginBottom: 8,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
-    opacity: 0.7,
+    color: '#64748b',
     lineHeight: 24,
   },
+  mainContent: {
+    flex: 1,
+    padding: 24,
+  },
   section: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 16,
   },
   label: {
-    marginBottom: 8,
     fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    backgroundColor: 'transparent',
+    backgroundColor: '#f8fafc',
+    color: '#1e293b',
+    marginBottom: 0,
   },
   toggleButton: {
     marginLeft: 12,
@@ -521,59 +518,80 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.6,
     lineHeight: 20,
+    marginBottom: 16,
   },
   link: {
     color: '#0a7ea4',
     textDecorationLine: 'underline',
   },
-  buttonContainer: {
-    marginTop: 32,
-    gap: 16,
-  },
   button: {
+    borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
+    marginBottom: 16,
   },
   primaryButton: {
-    backgroundColor: '#0a7ea4',
+    backgroundColor: '#3b82f6',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: '#94a3b8',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  primaryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   secondaryButton: {
+    backgroundColor: '#f8fafc',
     borderWidth: 2,
-    backgroundColor: 'transparent',
+    borderColor: '#3b82f6',
   },
   dangerButton: {
     backgroundColor: '#ff4444',
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
   },
   dangerButtonText: {
     color: 'white',
   },
   infoSection: {
-    marginTop: 40,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     padding: 20,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoTitle: {
     marginBottom: 12,
     fontSize: 16,
+    color: '#1e293b',
   },
   infoText: {
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 4,
     opacity: 0.8,
+    color: '#475569',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
   },
   debugInfoContainer: {
     flexDirection: 'row',
