@@ -27,7 +27,8 @@ interface Point {
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  const { isEnabled, isReady, isActive } = useAccessibilityCheck();
+  // Updated hook call
+  const { isEnabled, isReady, error, retry } = useAccessibilityCheck();
   const [task, setTask] = useState('');
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
@@ -56,50 +57,62 @@ export default function HomeScreen() {
 
   const checkAccessibilityOnStart = () => {
     if (!isEnabled) {
-      Alert.alert(
-        "Accessibility Service Required",
-        "This app requires accessibility permissions for automation features. Please enable AutoMate in accessibility settings.",
-        [
-          {
-            text: "Open Accessibility Settings",
-            onPress: () => openAccessibilitySettings()
-          },
-          {
-            text: "Cancel",
-            style: "cancel"
-          }
-        ]
-      );
+      promptAccessibility();
     }
   };
 
+  // Updated promptAccessibility to include "Run Anyway"
   const promptAccessibility = () => {
     Alert.alert(
-      "Accessibility Service 🔒",
-      isActive
-        ? "Service is active and ready!"
-        : `Service enabled but ${isReady ? "inactive - restart app?" : "initializing..."}`,
+      "Accessibility Service Required",
+      "This app requires accessibility permissions for automation features. Please enable AutoMate in accessibility settings.",
       [
         {
-          text: "Open Settings",
-          onPress: () => Linking.openSettings()
+          text: "Open Accessibility Settings",
+          onPress: openAccessibilitySettings
         },
-        { text: "Cancel" }
+        {
+          text: "Run Anyway",
+          onPress: () => startAutomation(true)
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
+        }
       ]
     );
   };
 
-  const startAutomation = async () => {
-    if (!isReady) {
-      Alert.alert("Service Initializing", "Please wait for the automation service to initialize");
+  // Updated startAutomation to accept force param and handle error/retry/run anyway
+  const startAutomation = async (force = false) => {
+    // Display alert if accessibility isn't ready and we're not forcing
+    if (error && !force) {
+      Alert.alert(
+        "Accessibility Warning",
+        `${error}\n\nAutomation may not work properly.`,
+        [
+          {
+            text: "Run Anyway",
+            onPress: () => startAutomation(true)
+          },
+          {
+            text: "Retry Check",
+            onPress: retry
+          },
+          { text: "Cancel" }
+        ]
+      );
       return;
     }
-    if (!isEnabled) {
+
+    if (!isEnabled && !force) {
       promptAccessibility();
       return;
     }
+
     setIsRunning(true);
-    setStatus('Generating plan...');
+    setStatus('Starting automation...');
+
     try {
       const screenshot = await AutomatorModule.takeScreenshot();
       setStatus('Captured initial screenshot');
@@ -183,7 +196,7 @@ export default function HomeScreen() {
         <View style={styles.controls}>
           <TouchableOpacity
             style={[styles.button, isRunning && styles.disabledButton]}
-            onPress={startAutomation}
+            onPress={() => startAutomation()}
             disabled={isRunning || !task}
           >
             <Text style={styles.buttonText}>Run Automation</Text>
