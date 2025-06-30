@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    marginBottom: 32, // Increased from 0
   },
   sectionTitle: {
     fontSize: 18,
@@ -274,6 +275,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    marginBottom: 32, // Increased from 0
   },
   statusText: {
     fontSize: 16,
