@@ -51,8 +51,11 @@ class AutomatorService : AccessibilityService() {
     }
 
     fun simulateTap(x: Float, y: Float) {
-        Log.d("AutoMateDebug", "Executing tap at: ($x, $y) px")
         val size = screenSize
+        if (size.width == 0 || size.height == 0) {
+            throw Exception("SCREEN_SIZE_UNAVAILABLE") // Add this specific error code
+        }
+        Log.d("AutoMateDebug", "Executing tap at: ($x, $y) px")
         val maxX = size.width.toFloat()
         val maxY = size.height.toFloat()
         

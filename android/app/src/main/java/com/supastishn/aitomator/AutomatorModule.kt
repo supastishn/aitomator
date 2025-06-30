@@ -84,7 +84,12 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             resultMap.putDouble("y", screenY)
             promise.resolve(resultMap)
         } catch (e: Exception) {
-            promise.reject("TOUCH_ERROR", e.message)
+            // Add this error mapping
+            val errorCode = when {
+                e.message?.contains("SCREEN_SIZE_UNAVAILABLE") == true -> "SCREEN_SIZE_ERROR"
+                else -> "TOUCH_ERROR"
+            }
+            promise.reject(errorCode, e.message)
         }
     }
 

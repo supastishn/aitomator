@@ -10,6 +10,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
+import * as LinkingExpo from 'expo-linking';
 import AutomatorModule from '@/lib/native';
 import { useState } from 'react';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
@@ -68,6 +69,29 @@ export default function HomeScreen() {
       );
       setStatus('Automation complete!');
     } catch (error: any) {
+      // ADD THIS NEW ERROR HANDLING BLOCK
+      if (error.code === 'SCREEN_SIZE_ERROR') {
+        Alert.alert(
+          "Accessibility malfunction detected",
+          "A malfunction in accessibility service has been detected. This commonly happens on Chinese phones (e.g Xiaomi, Huawei) as they do not follow Android's rules of services.\n\nTo fix this, force stop the app, open accessibility settings, turn off the accessibility for AutoMate, then open the app again.",
+          [
+            {
+              text: "OPEN ACCESSIBILITY SETTINGS",
+              onPress: openAccessibilitySettings
+            },
+            {
+              text: "OPEN APP SETTINGS",
+              onPress: () => LinkingExpo.openSettings()
+            },
+            {
+              text: "CLOSE",
+              style: "cancel"
+            }
+          ]
+        );
+        setStatus('Automation failed: Accessibility service malfunction');
+        return;
+      }
       // Systematically catch native module errors
       let effectiveError = error.message || 'Unknown error';
       
