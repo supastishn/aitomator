@@ -141,7 +141,10 @@ async function generatePlan(task: string, screenshot: string): Promise<string[]>
     model: settings.model,
     messages: [{
       role: "user",
-      content: `You are a task planner for an automation assistant. Break down the user's task into 3-7 atomic subtasks.
+      content: [
+        {
+          type: "text",
+          text: `You are a task planner for an automation assistant. Break down the user's task into 3-7 atomic subtasks.
 
 AVAILABLE TOOLS:
 ${TOOL_DATA}
@@ -174,6 +177,15 @@ RULES:
 6. If an app cannot be found through search_apps, use open_link with the appropriate URL instead
 
 TASK: "${task}"`
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:image/jpeg;base64,${screenshot}`,
+            detail: "high" // Use high quality for planning tasks
+          }
+        }
+      ]
     }]
   };
 
