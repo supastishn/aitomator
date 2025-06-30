@@ -307,39 +307,4 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
 
-    // Add getServiceHealthStatus method
-    @ReactMethod
-    fun getServiceHealthStatus(promise: Promise) {
-        try {
-            val result = Arguments.createMap()
-            val settingsEnabled = isAccessibilityServiceEnabledSilent()
-            result.putBoolean("settingsEnabled", settingsEnabled)
-            promise.resolve(result)
-        } catch (e: Exception) {
-            promise.reject("HEALTH_CHECK_FAILED", e.message)
-        }
-    }
-
-    private fun isAccessibilityServiceEnabledSilent(): Boolean {
-        try {
-            val serviceName = android.content.ComponentName(reactApplicationContext, AutomatorService::class.java)
-            val accessibilityEnabled = android.provider.Settings.Secure.getInt(
-                reactApplicationContext.contentResolver,
-                android.provider.Settings.Secure.ACCESSIBILITY_ENABLED,
-                0
-            ) == 1
-
-            if (!accessibilityEnabled) return false
-
-            val services = android.provider.Settings.Secure.getString(
-                reactApplicationContext.contentResolver,
-                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-            ) ?: ""
-
-            return services.contains(serviceName.flattenToString()) ||
-                   services.contains(serviceName.flattenToShortString())
-        } catch (e: Exception) {
-            return false
-        }
-    }
 }

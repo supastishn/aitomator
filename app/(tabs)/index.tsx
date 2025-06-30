@@ -15,16 +15,19 @@ import AutomatorModule from '@/lib/native';
 import { useState } from 'react';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 import { runAutomationWorkflow } from '@/services/aiProcessor';
+import { Modal } from 'react-native';
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [task, setTask] = useState('');
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
+  const [showAccessibilityWarning, setShowAccessibilityWarning] = useState(false);
+  const [ignoreWarning, setIgnoreWarning] = useState(false);
 
   // Accessibility hook setup
   const { 
-    settingsEnabled, 
+    isAccessibilityEnabled,
     checkAccessibility,
   } = useAccessibilityCheck();
 
@@ -36,19 +39,13 @@ export default function HomeScreen() {
     }
   };
 
-  const showAccessibilityPrompt = (enabled: boolean) => {
-    Alert.alert(
-      "Service Required",
-      `App automation requires accessibility service to be enabled in system settings.
-        Current status: ${enabled ? "ENABLED" : "DISABLED"}`,
-      [
-        { text: "Open Settings", onPress: openAccessibilitySettings },
-        { text: "Retry", onPress: checkAccessibility }
-      ]
-    );
-  };
+  const startAutomationAfterCheck = async () => {
+    // Check accessibility status unless user ignored warning
+    if (!ignoreWarning && !isAccessibilityEnabled) {
+      setShowAccessibilityWarning(true);
+      return;
+    }
 
-  const startAutomation = async () => {
     setIsRunning(true);
     setStatus('Starting automation...');
 
@@ -69,7 +66,6 @@ export default function HomeScreen() {
       );
       setStatus('Automation complete!');
     } catch (error: any) {
-      // ADD THIS NEW ERROR HANDLING BLOCK
       if (error.code === 'SCREEN_SIZE_ERROR') {
         Alert.alert(
           "Accessibility malfunction detected",
@@ -92,21 +88,17 @@ export default function HomeScreen() {
         setStatus('Automation failed: Accessibility service malfunction');
         return;
       }
-      // Systematically catch native module errors
       let effectiveError = error.message || 'Unknown error';
-      
-      // Check accessibility only when native module fails
       try {
-        const health = await checkAccessibility();
-        if (!health.settingsEnabled) {
-          showAccessibilityPrompt(health.settingsEnabled);
+        const enabled = await checkAccessibility();
+        if (!enabled) {
+          setShowAccessibilityWarning(true);
         } else {
           effectiveError += '\n({tech_details})';
         }
       } catch (healthErr: any) {
         effectiveError += `\nAccessibility check also failed: ${healthErr.message}`;
       }
-      
       setStatus(`Automation error: ${effectiveError}`);
     } finally {
       setIsRunning(false);
@@ -145,7 +137,7 @@ export default function HomeScreen() {
               styles.primaryButton,
               (isRunning || !task) && styles.primaryButtonDisabled
             ]}
-            onPress={() => startAutomation()}
+            onPress={startAutomationAfterCheck}
             disabled={isRunning || !task}
             activeOpacity={0.8}
           >
@@ -178,6 +170,49 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
+      <Modal
+        visible={showAccessibilityWarning}
+        onRequestClose={() => setShowAccessibilityWarning(false)}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Important!</Text>
+            <Text style={styles.modalText}>
+              Make sure you have accessibility service enabled before continuing!
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowAccessibilityWarning(false);
+                openAccessibilitySettings();
+              }}
+            >
+              <Text style={styles.modalButtonText}>Open Accessibility Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={async () => {
+                setShowAccessibilityWarning(false);
+                await checkAccessibility();
+              }}
+            >
+              <Text style={styles.modalButtonText}>Retry Check</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonDanger]}
+              onPress={() => {
+                setShowAccessibilityWarning(false);
+                setIgnoreWarning(true);
+                startAutomationAfterCheck();
+              }}
+            >
+              <Text style={[styles.modalButtonText, { color: '#ef4444' }]}>Continue Anyway</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -310,5 +345,43 @@ const styles = StyleSheet.create({
   preview: {
     width: '100%',
     height: 400,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center'
+  },
+  modalButton: {
+    backgroundColor: '#3b82f6',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 5,
+    alignItems: 'center'
+  },
+  modalButtonDanger: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#ef4444',
+    borderWidth: 1
+  },
+  modalButtonText: {
+    color: 'white',
   },
 });

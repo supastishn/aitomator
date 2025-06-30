@@ -167,6 +167,11 @@ RULES:
 5. Consider current screen for initial actions
 6. If an app cannot be found through search_apps, use open_link with the appropriate URL instead
 
+PREFERRED BEHAVIOR:
+1. Always prefer opening browser version when possible
+2. Use native apps only when browser alternative is inferior
+3. Suggest browser options when apps are unavailable
+
 TASK: "${task}"`
     }]
   };

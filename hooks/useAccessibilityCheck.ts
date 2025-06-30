@@ -2,16 +2,21 @@ import { useState } from 'react';
 import AutomatorModule from '@/lib/native';
 
 export default function useAccessibilityCheck() {
-  const [settingsEnabled, setSettingsEnabled] = useState(false);
+  const [isAccessibilityEnabled, setIsAccessibilityEnabled] = useState(false);
 
   const checkAccessibility = async () => {
-    const health = await AutomatorModule.getServiceHealthStatus();
-    setSettingsEnabled(health.settingsEnabled);
-    return health;
+    try {
+      const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
+      setIsAccessibilityEnabled(enabled);
+      return enabled;
+    } catch (error) {
+      console.error('Accessibility check failed:', error);
+      return false;
+    }
   };
 
   return {
-    settingsEnabled,
+    isAccessibilityEnabled,
     checkAccessibility,
   };
 }
