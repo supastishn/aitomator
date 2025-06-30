@@ -210,9 +210,10 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.modalButton, styles.modalButtonDanger]}
               onPress={() => {
+                // Only close the popup
                 setShowAccessibilityWarning(false);
+                // Prevent future warnings in this session
                 setIgnoreWarning(true);
-                startAutomationAfterCheck();
               }}
             >
               <Text style={[styles.modalButtonText, { color: '#ef4444' }]}>Continue Anyway</Text>
