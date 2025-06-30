@@ -20,8 +20,9 @@ interface AutomatorInterface extends NativeModule {
 // Add proper error handling for native commands
 const NativeBridge: AutomatorInterface = {
     ...AutomatorModule,
-    // Add this explicit assignment:
+    // Add these explicit assignments:
     searchApps: AutomatorModule.searchApps,
+    openApp: AutomatorModule.openApp,
 
     // Explicitly bind these methods to ensure they're present
     isAccessibilityServiceEnabled: AutomatorModule.isAccessibilityServiceEnabled,
@@ -55,6 +56,13 @@ if (!NativeBridge.searchApps) {
     NativeBridge.searchApps = async (query: string) => {
         console.error("Native searchApps not available - using fallback");
         return [];
+    };
+}
+
+if (!NativeBridge.openApp) {
+    NativeBridge.openApp = async () => {
+        console.error("Native openApp fallback enabled");
+        return false;
     };
 }
 

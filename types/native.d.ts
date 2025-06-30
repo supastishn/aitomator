@@ -17,7 +17,7 @@ declare module 'native' {
     performSwipe: (breakpoints: Array<{x: number, y: number}>) => Promise<void>;
     typeText: (text: string) => Promise<void>;
     searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
-    openApp: (packageName: string) => Promise<void>;
+    openApp: (packageName: string) => Promise<void>;  // Ensure return type is Promise<void>
     // Only system-level accessibility check
     isAccessibilityServiceEnabled: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
