@@ -18,13 +18,6 @@ import android.view.accessibility.AccessibilityNodeInfo
 class AutomatorService : AccessibilityService() {
     val screenSize: Size by lazy { getScreenDimensions() }
 
-    companion object {
-        private var instance: AutomatorService? = null
-        private var connected: Boolean = false
-        fun getInstance(): AutomatorService? = instance
-        fun isConnected(): Boolean = instance?.connected ?: false
-    }
-
     // Get dimensions safely with fallbacks
     private fun getScreenDimensions(): Size {
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -144,6 +137,8 @@ class AutomatorService : AccessibilityService() {
 
     companion object {
         private var instance: AutomatorService? = null
+        private var connected: Boolean = false
         fun getInstance(): AutomatorService? = instance
+        fun isConnected(): Boolean = instance?.connected ?: false
     }
 }
