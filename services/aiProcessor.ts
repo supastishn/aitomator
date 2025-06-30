@@ -114,13 +114,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "open_link",
-      description: "Opens a URL in the device's browser or appropriate app",
+      description: "Opens web URL as fallback when native app isn't available",
       parameters: {
         type: "object",
         properties: {
           url: { 
             type: "string",
-            description: "Full URL to open including protocol (http:// or https://)"
+            description: "Web URL to open (include protocol)"
           }
         },
         required: ["url"]
@@ -424,19 +424,30 @@ async function executeSubtask(
                 tool_call_id: toolCall.id
               });
             } else if (name === 'open_app') {
-              await AutomatorModule.openApp(args.packageName);
-              // Update screenshot after app opens
-              const newScreenshot = await AutomatorModule.takeScreenshot();
-              updateScreenshot(newScreenshot);
-              lastScreenshot = newScreenshot;
-              const resultText = "App launched successfully";
-              // LOG TOOL CALL RESULT
-              console.log(`Tool call ${toolCall.id} result:`, resultText);
-              messages.push({
-                role: "tool",
-                content: resultText,
-                tool_call_id: toolCall.id
-              });
+              try {
+                await AutomatorModule.openApp(args.packageName);
+                // Update screenshot after app opens
+                const newScreenshot = await AutomatorModule.takeScreenshot();
+                updateScreenshot(newScreenshot);
+                lastScreenshot = newScreenshot;
+        
+                messages.push({
+                  role: "tool",
+                  content: `Opened app successfully`,
+                  tool_call_id: toolCall.id
+                });
+              } catch (err: any) {
+                if (err.code === 'APP_NOT_FOUND') {
+                  // Suggest web alternative to LLM instead of automatic fallback
+                  messages.push({
+                    role: "tool",
+                    content: `App '${err.cause || args.packageName}' not installed. Use open_link to access web version.`,
+                    tool_call_id: toolCall.id
+                  });
+                } else {
+                  throw err;
+                }
+              }
             } else if (name === 'end_subtask') {
               if (args.success) {
                 const resultText = "Subtask ended successfully";

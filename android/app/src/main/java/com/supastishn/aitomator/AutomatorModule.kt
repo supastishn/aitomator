@@ -215,7 +215,12 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                 reactApplicationContext.startActivity(launchIntent)
                 promise.resolve(true)
             } ?: run {
-                promise.reject("APP_NOT_FOUND", "No launchable activity found for package $packageNameToOpen")
+                // Update error message format
+                promise.reject(
+                    "APP_NOT_FOUND",
+                    "Package '$packageNameToOpen' not found. Suggest using web version.",
+                    packageNameToOpen // Add this as the throwable cause
+                )
             }
         } catch (e: Exception) {
             promise.reject("OPEN_ERROR", "Failed to open app: ${e.message}")
