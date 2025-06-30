@@ -18,13 +18,11 @@ declare module 'native' {
     typeText: (text: string) => Promise<void>;
     searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
     openApp: (packageName: string) => Promise<void>;
-    // Ensure both accessibility methods are declared
+    // Only system-level accessibility check
     isAccessibilityServiceEnabled: () => Promise<boolean>;
-    isServiceConnected: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
     getServiceHealthStatus: () => Promise<{
       settingsEnabled: boolean;
-      serviceBound: boolean;
     }>;
   }
 

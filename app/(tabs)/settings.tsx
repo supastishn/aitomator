@@ -291,6 +291,12 @@ export default function SettingsScreen() {
                 {width} x {height} px
               </Text>
             </View>
+            <View style={styles.debugInfoContainer}>
+              <Text style={styles.debugLabel}>Accessibility Enabled:</Text>
+              <Text style={styles.debugText}>
+                {/* You can fetch and display the value here if needed */}
+              </Text>
+            </View>
 
             <Text style={styles.debugTitle}>Test LLM Functions</Text>
 

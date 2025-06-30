@@ -24,10 +24,7 @@ export default function HomeScreen() {
   // Accessibility hook setup
   const { 
     settingsEnabled, 
-    serviceBound, 
     checkAccessibility,
-    isReady,
-    error 
   } = useAccessibilityCheck();
 
   const openAccessibilitySettings = () => {
@@ -38,24 +35,14 @@ export default function HomeScreen() {
     }
   };
 
-  const showAccessibilityPrompt = (health: {
-    settingsEnabled: boolean;
-    serviceBound: boolean;
-  }) => {
+  const showAccessibilityPrompt = (enabled: boolean) => {
     Alert.alert(
       "Service Required",
-      `App automation requires accessibility service. Status:\n
-      Settings: ${health.settingsEnabled ? "ON" : "OFF"}
-      Connection: ${health.serviceBound ? "ACTIVE" : "INACTIVE"}`,
+      `App automation requires accessibility service to be enabled in system settings.
+        Current status: ${enabled ? "ENABLED" : "DISABLED"}`,
       [
-        {
-          text: "Open Settings",
-          onPress: openAccessibilitySettings
-        },
-        {
-          text: "Restart App",
-          onPress: () => { checkAccessibility() }
-        }
+        { text: "Open Settings", onPress: openAccessibilitySettings },
+        { text: "Retry", onPress: checkAccessibility }
       ]
     );
   };
@@ -87,15 +74,12 @@ export default function HomeScreen() {
       // Check accessibility only when native module fails
       try {
         const health = await checkAccessibility();
-        if (!health.settingsEnabled || !health.serviceBound) {
-          // Show accessibility prompt if health check fails
-          showAccessibilityPrompt(health);
+        if (!health.settingsEnabled) {
+          showAccessibilityPrompt(health.settingsEnabled);
         } else {
-          // Detailed error handling for other native errors
           effectiveError += '\n({tech_details})';
         }
       } catch (healthErr: any) {
-        // Combined error reporting
         effectiveError += `\nAccessibility check also failed: ${healthErr.message}`;
       }
       

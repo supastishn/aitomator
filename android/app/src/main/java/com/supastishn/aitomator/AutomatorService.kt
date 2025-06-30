@@ -48,7 +48,6 @@ class AutomatorService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        connected = true
     }
 
     fun simulateTap(x: Float, y: Float) {
@@ -132,16 +131,10 @@ class AutomatorService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         instance = null
-        connected = false
     }
 
     companion object {
         private var instance: AutomatorService? = null
-        private var connected: Boolean = false
-
-        // Add this method
-        @JvmStatic
-        fun isConnected(): Boolean = connected
 
         fun getInstance(): AutomatorService? = instance
     }

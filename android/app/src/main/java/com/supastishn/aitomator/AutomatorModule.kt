@@ -297,27 +297,13 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
 
-    // Add isServiceConnected method
-    @ReactMethod
-    fun isServiceConnected(promise: Promise) {
-        try {
-            val connected = AutomatorService.isConnected()
-            Log.d("AutoMateDebug", "[Service] Connection Check: $connected")
-            promise.resolve(connected)
-        } catch (e: Exception) {
-            Log.e("AutoMateDebug", "[Service] Connection Check Failed: ${e.message}")
-            promise.reject("SERVICE_CONNECTION_ERROR", e.message)
-        }
-    }
-
     // Add getServiceHealthStatus method
     @ReactMethod
     fun getServiceHealthStatus(promise: Promise) {
         try {
-            // Return service status object
             val result = Arguments.createMap()
-            result.putBoolean("settingsEnabled", isAccessibilityServiceEnabledSilent())
-            result.putBoolean("serviceBound", AutomatorService.isConnected())
+            val settingsEnabled = isAccessibilityServiceEnabledSilent()
+            result.putBoolean("settingsEnabled", settingsEnabled)
             promise.resolve(result)
         } catch (e: Exception) {
             promise.reject("HEALTH_CHECK_FAILED", e.message)
