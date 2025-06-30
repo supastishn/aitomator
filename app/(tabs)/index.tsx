@@ -110,74 +110,72 @@ export default function HomeScreen() {
   };
 
   return (
-  <View style={styles.container}>
-    <View style={styles.headerSection}>
-      <Text style={styles.headerTitle}>AutoMate</Text>
-      <Text style={styles.headerSubtitle}>
-        AI-powered automation for your device
-      </Text>
-    </View>
-    
-    <ScrollView 
-      style={styles.mainContent}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
-      <View style={styles.taskSection}>
-        <Text style={styles.sectionTitle}>Automation Task</Text>
-        <TextInput
-          style={[styles.taskInput]}
-          placeholder="What would you like to automate? (e.g., 'Open YouTube and search for cats')"
-          placeholderTextColor="#94a3b8"
-          value={task}
-          onChangeText={setTask}
-          editable={!isRunning}
-          multiline
-          numberOfLines={3}
-        />
-        
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            (isRunning || !task) && styles.primaryButtonDisabled
-          ]}
-          onPress={() => startAutomation()}
-          disabled={isRunning || !task}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.primaryButtonText}>
-            {isRunning ? 'Running...' : 'Start Automation'}
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.mainContent}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        <View style={styles.headerSection}>
+          <Text style={styles.headerTitle}>AutoMate</Text>
+          <Text style={styles.headerSubtitle}>
+            AI-powered automation for your device
           </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statusSection}>
-        <Text style={styles.sectionTitle}>Status</Text>
-        <Text style={[
-          styles.statusText,
-          isRunning && styles.statusTextActive
-        ]}>
-          {status}
-        </Text>
-      </View>
-
-
-      {screenshotUri && (
-        <View style={styles.previewSection}>
-          <Text style={styles.sectionTitle}>Screen Preview</Text>
-          <View style={styles.previewContainer}>
-            <Image
-              source={{ uri: screenshotUri }}
-              style={styles.preview}
-              contentFit="contain"
-            />
-          </View>
         </View>
-      )}
 
-    </ScrollView>
-  </View>
-);
+        <View style={styles.taskSection}>
+          <Text style={styles.sectionTitle}>Automation Task</Text>
+          <TextInput
+            style={[styles.taskInput]}
+            placeholder="What would you like to automate? (e.g., 'Open YouTube and search for cats')"
+            placeholderTextColor="#94a3b8"
+            value={task}
+            onChangeText={setTask}
+            editable={!isRunning}
+            multiline
+            numberOfLines={3}
+          />
+
+          <TouchableOpacity
+            style={[
+              styles.primaryButton,
+              (isRunning || !task) && styles.primaryButtonDisabled
+            ]}
+            onPress={() => startAutomation()}
+            disabled={isRunning || !task}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>
+              {isRunning ? 'Running...' : 'Start Automation'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statusSection}>
+          <Text style={styles.sectionTitle}>Status</Text>
+          <Text style={[
+            styles.statusText,
+            isRunning && styles.statusTextActive
+          ]}>
+            {status}
+          </Text>
+        </View>
+
+        {screenshotUri && (
+          <View style={styles.previewSection}>
+            <Text style={styles.sectionTitle}>Screen Preview</Text>
+            <View style={styles.previewContainer}>
+              <Image
+                source={{ uri: screenshotUri }}
+                style={styles.preview}
+                contentFit="contain"
+              />
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

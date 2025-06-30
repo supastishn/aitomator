@@ -144,17 +144,17 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerSection}>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <Text style={styles.headerSubtitle}>
-          Configure your AI automation settings
-        </Text>
-      </View>
       <ScrollView
         style={styles.mainContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
+        <View style={styles.headerSection}>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={styles.headerSubtitle}>
+            Configure your AI automation settings
+          </Text>
+        </View>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>OpenAI Configuration</Text>
 
@@ -442,6 +442,9 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+    marginHorizontal: 24,
+    marginTop: 24,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -461,7 +464,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    padding: 24,
+    // padding removed since header is now inside
   },
   section: {
     backgroundColor: '#ffffff',
