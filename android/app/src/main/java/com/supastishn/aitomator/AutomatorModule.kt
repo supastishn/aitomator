@@ -213,15 +213,14 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     }
 
     @ReactMethod
-    fun openLink(url: String, promise: Promise) {
+    fun openLink(url: String) {
         try {
             val context = currentActivity ?: reactApplicationContext
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-            promise.resolve(true)
         } catch (e: Exception) {
-            promise.reject("OPEN_LINK_ERROR", e.message)
+            Log.e("AutoMate", "openLink error: ${e.message}")
         }
     }
 
