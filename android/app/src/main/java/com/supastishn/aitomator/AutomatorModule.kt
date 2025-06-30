@@ -225,13 +225,17 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun isAccessibilityServiceEnabled(promise: Promise) {
         try {
-            // Get our service name
             val serviceName = android.content.ComponentName(
                 reactApplicationContext,
                 AutomatorService::class.java
             )
 
-            // Check if accessibility is enabled system-wide
+            // Add logging for service names
+            val longName = serviceName.flattenToString()
+            val shortName = serviceName.flattenToShortString()
+            android.util.Log.d("AutoMateDebug", "Service check - long name: $longName")
+            android.util.Log.d("AutoMateDebug", "Service check - short name: $shortName")
+
             val accessibilityEnabled = android.provider.Settings.Secure.getInt(
                 reactApplicationContext.contentResolver,
                 android.provider.Settings.Secure.ACCESSIBILITY_ENABLED,
@@ -239,31 +243,25 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             ) == 1
 
             if (!accessibilityEnabled) {
+                android.util.Log.d("AutoMateDebug", "Accessibility is disabled system-wide")
                 promise.resolve(false)
                 return
             }
 
-            // Get the list of enabled accessibility services
             val servicesList = android.provider.Settings.Secure.getString(
                 reactApplicationContext.contentResolver,
                 android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
             ) ?: ""
 
-            // Check if our service is in the list
+            android.util.Log.d("AutoMateDebug", "Enabled services: $servicesList")
+            
             val serviceEnabled = servicesList.split(":").any { id ->
-                id.equals(serviceName.flattenToString(), ignoreCase = true)
+                // Check both representations of service names
+                id.equals(longName, ignoreCase = true) || 
+                id.equals(shortName, ignoreCase = true)
             }
 
-            // Log details for diagnostics
-            android.util.Log.d(
-                "AutoMateDebug",
-                "Accessibility status - " +
-                "service: ${serviceName.flattenToString()}, " +
-                "enabled: $serviceEnabled, " +
-                "system enabled: $accessibilityEnabled, " +
-                "services: $servicesList"
-            )
-
+            android.util.Log.d("AutoMateDebug", "Service enabled: $serviceEnabled")
             promise.resolve(serviceEnabled)
         } catch (e: Exception) {
             android.util.Log.e("AutoMateDebug", "Accessibility check error: ${e.message}")

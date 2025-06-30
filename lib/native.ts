@@ -7,6 +7,7 @@ import { NativeModule } from 'react-native';
 
 interface AutomatorInterface extends NativeModule {
     isAccessibilityServiceEnabled: () => Promise<boolean>;
+    isServiceConnected: () => Promise<boolean>;
     performTouch: (x: number, y: number, amount?: number, spacing?: number) => Promise<{ x: number; y: number }>;
     performSwipe: (breakpoints: {x: number, y: number}[]) => Promise<void>;
     typeText: (text: string) => Promise<void>;

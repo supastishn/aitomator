@@ -66,17 +66,28 @@ export default function HomeScreen() {
     try {
       let isReady = false;
       let attempts = 0;
+      let settingsEnabled = false;
+      let connected = false;
 
       while (!isReady && attempts < 5) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const [isEnabled, isConnected] = await Promise.all([
+        
+        // Get both status values separately
+        const [settingsStatus, connectionStatus] = await Promise.all([
           AutomatorModule.isAccessibilityServiceEnabled(),
           AutomatorModule.isServiceConnected()
         ]);
+        settingsEnabled = settingsStatus;
+        connected = connectionStatus;
 
-        isReady = isEnabled && isConnected;
+        isReady = settingsEnabled && connected;
         attempts++;
+
+        // Add debug logging
+        console.log(
+          `Accessibility check attempt ${attempts}: ` +
+          `Config=${settingsEnabled}, Service=${connected}`
+        );
 
         if (isReady) {
           startAutomation();
@@ -84,9 +95,14 @@ export default function HomeScreen() {
         }
       }
 
-      Alert.alert('Service Not Ready', 'Accessibility service taking too long to enable. Please restart the app');
+      Alert.alert('Service Not Ready', 
+        'Accessibility service taking too long to enable. ' +
+        'Configuration: ' + (settingsEnabled ? 'Enabled' : 'Disabled') + ' | ' +
+        'Connection: ' + (connected ? 'Active' : 'Inactive') +
+        '\n\nPlease restart the app'
+      );
     } catch (error: any) {
-      Alert.alert('Error', 'Service check failed: ' + error.message);
+      Alert.alert('Error', `Service check failed: ${error.message}`);
     }
   };
 
