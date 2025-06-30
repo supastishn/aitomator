@@ -11,8 +11,8 @@ declare module 'native' {
     performTouch: (
         x: number, 
         y: number, 
-        amount?: number, 
-        spacing?: number
+        amount?: number,  // Added ?
+        spacing?: number  // Added ?
     ) => Promise<{ x: number; y: number }>;
     performSwipe: (breakpoints: Array<{x: number, y: number}>) => Promise<void>;
     typeText: (text: string) => Promise<void>;
@@ -20,7 +20,7 @@ declare module 'native' {
     openApp: (packageName: string) => Promise<void>;
     isAccessibilityServiceEnabled: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
-    openLink: (url: string) => void;  // Changed to void
+    openLink: (url: string) => Promise<void>;  // Changed to Promise
   }
 
   const AutomatorModule: AutomatorInterface;

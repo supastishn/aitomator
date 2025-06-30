@@ -110,13 +110,17 @@ class AutomatorService : AccessibilityService() {
         if (points.size < 2) return 300L
         var totalDistance = 0f
         for (i in 1 until points.size) {
+            // Add coordinate validation
+            if (points[i].first < 0 || points[i].second < 0) {
+                throw IllegalArgumentException("Invalid coordinate values")
+            }
             totalDistance += Math.hypot(
                 (points[i].first - points[i-1].first).toDouble(),
                 (points[i].second - points[i-1].second).toDouble()
             ).toFloat()
         }
-        // 100ms PER 100PX + minimum 100ms
-        return (totalDistance + 100).toLong()
+        // 1ms per pixel + minimum 100ms
+        return (totalDistance * 1.0).toLong() + 100
     }
 
     fun typeText(text: String): Boolean {

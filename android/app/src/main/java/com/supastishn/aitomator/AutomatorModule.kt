@@ -12,6 +12,7 @@ import java.io.FileOutputStream
 import android.content.Intent
 import android.net.Uri
 import com.facebook.react.module.annotations.ReactModule
+import androidx.annotation.UiThread
 
 @ReactModule(name = "AutomatorModule")
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
@@ -41,11 +42,16 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     }
 
     // Update performTouch to handle coordinates conversion and multi-touch
+    @UiThread
     @ReactMethod
-    fun performTouch(x: Float, y: Float, amount: Int, spacing: Int, promise: Promise) {
+    fun performTouch(x: Float, y: Float, amount: Int?, spacing: Int?, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
                 ?: throw Exception("Service unavailable")
+
+            // Provide defaults for optional parameters
+            val touchAmount = amount ?: 1
+            val touchSpacing = spacing ?: 0
 
             val size = service.screenSize
             val screenX = x * size.width
@@ -54,13 +60,13 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             // Add debug log
             Log.d("AutoMateDebug",
                 "Touch: normalized ($x, $y) -> pixels ($screenX, $screenY) " +
-                "amount: $amount, spacing: ${spacing}ms"
+                "amount: $touchAmount, spacing: ${touchSpacing}ms"
             )
 
-            for (i in 0 until amount) {
+            for (i in 0 until touchAmount) {
                 service.simulateTap(screenX, screenY)
-                if (spacing > 0 && i < amount - 1) {
-                    Thread.sleep(spacing.toLong())
+                if (touchSpacing > 0 && i < touchAmount - 1) {
+                    Thread.sleep(touchSpacing.toLong())
                 }
             }
             
@@ -75,6 +81,7 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     }
 
     // Implement performSwipe
+    @UiThread
     @ReactMethod
     fun performSwipe(breakpoints: ReadableArray, promise: Promise) {
         try {
@@ -97,6 +104,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                 points.add(Pair(pixelX, pixelY))
                 normPoints.add("($normX, $normY)")
                 pixelPoints.add("($pixelX, $pixelY)")
+            }
+
+            // Add throw condition for empty breakpoints
+            if (points.size < 2) {
+                throw Exception("At least two breakpoints required for swipe")
             }
 
             // Add debug log
@@ -213,14 +225,16 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     }
 
     @ReactMethod
-    fun openLink(url: String) {
+    fun openLink(url: String, promise: Promise) {
         try {
             val context = currentActivity ?: reactApplicationContext
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
+            promise.resolve(true)
         } catch (e: Exception) {
             Log.e("AutoMate", "openLink error: ${e.message}")
+            promise.reject("OPEN_LINK_ERROR", e.message)
         }
     }
 
