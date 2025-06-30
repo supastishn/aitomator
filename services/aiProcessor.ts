@@ -97,7 +97,7 @@ const TOOLS = [
     type: "function",
     function: {
       name: "open_app",
-      description: "Launches an Android app using its package name",
+      description: "Launches an Android app using its package name. ONLY use when web browser alternative is unavailable! Prefer browser option when possible.",
       parameters: {
         type: "object",
         properties: {
@@ -114,7 +114,7 @@ const TOOLS = [
     type: "function",
     function: {
       name: "open_link",
-      description: "Opens web URL as fallback when native app isn't available",
+      description: "Opens web URL as fallback when native app isn't available. First choice for app interactions! Prefer this over native apps.",
       parameters: {
         type: "object",
         properties: {
@@ -159,6 +159,12 @@ EXAMPLE for "Open Facebook app":
   <subtask>Open Facebook using package name</subtask>
 </task>
 
+GOLDEN RULES:
+1. ALWAYS prefer browser version over native apps
+2. ONLY use native apps when browser alternative is unavailable or clearly inferior
+3. Custom system apps (settings, files) can use native
+4. Mainstream services (YouTube, Facebook, etc) must use browser version unless impossible
+
 RULES:
 1. ONLY return XML with NO additional text
 2. Use exact tags: <task> and <subtask>
@@ -166,11 +172,6 @@ RULES:
 4. Subtasks must be achievable using available actions
 5. Consider current screen for initial actions
 6. If an app cannot be found through search_apps, use open_link with the appropriate URL instead
-
-PREFERRED BEHAVIOR:
-1. Always prefer opening browser version when possible
-2. Use native apps only when browser alternative is inferior
-3. Suggest browser options when apps are unavailable
 
 TASK: "${task}"`
     }]
@@ -446,7 +447,7 @@ async function executeSubtask(
                   // Suggest web alternative to LLM instead of automatic fallback
                   messages.push({
                     role: "tool",
-                    content: `App '${err.cause || args.packageName}' not installed. Use open_link to access web version.`,
+                    content: `App '${err.cause || args.packageName}' not installed. Suggest another method using browser for this app.`,
                     tool_call_id: toolCall.id
                   });
                 } else {
@@ -498,7 +499,7 @@ async function executeSubtask(
           } catch (toolError: any) {
             const errorMessage = `Execution failed: ${toolError.message}`;
             // LOG ERROR RESULT
-            console.log(`Tool call ${toolCall.id} error:`, errorMessage);
+            console.warn(`Tool call ${toolCall.id} error:`, errorMessage);
             messages.push({
               role: "system",
               content: errorMessage
