@@ -384,10 +384,23 @@ export default function SettingsScreen() {
                       break;
                     case "open_link":
                     case "open_url":
-                      await import('expo-web-browser').then(WebBrowser =>
-                        WebBrowser.openBrowserAsync(args.url)
+                      // Get the URL argument (either 'link' or 'url')
+                      const urlArg = args.url || args.link;
+                      
+                      if (!urlArg) {
+                        throw new Error('Must provide "url" or "link" parameter');
+                      }
+                      
+                      // Add URL protocol if missing
+                      const fullUrl = urlArg.startsWith('http') 
+                        ? urlArg 
+                        : `https://${urlArg}`;
+                      
+                      await import('expo-web-browser').then(
+                        WebBrowser => WebBrowser.openBrowserAsync(fullUrl)
                       );
-                      result = "Browser opened";
+                      
+                      result = "Browser opened successfully";
                       break;
                     case "typeText":
                     case "type_text":

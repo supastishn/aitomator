@@ -363,6 +363,11 @@ async function executeSubtask(
             const args = JSON.parse(toolCall.function.arguments);
             const name = toolCall.function.name;
 
+            // Log tool call execution with arguments
+            console.log(
+              `Executing tool: ${name}(${JSON.stringify(args)})`
+            );
+
             if (name === 'touch') {
               // Validate required parameters with type checking
               if (typeof args.x !== 'number' || typeof args.y !== 'number') {
