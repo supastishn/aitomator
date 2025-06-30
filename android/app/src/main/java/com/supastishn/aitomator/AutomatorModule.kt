@@ -294,4 +294,14 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             promise.reject("DIMENSIONS_ERROR", "Failed to get screen dimensions", e)
         }
     }
+
+    // Add isServiceConnected method
+    @ReactMethod
+    fun isServiceConnected(promise: Promise) {
+        try {
+            promise.resolve(AutomatorService.isConnected())
+        } catch (e: Exception) {
+            promise.reject("SERVICE_CONNECTION_ERROR", e.message)
+        }
+    }
 }

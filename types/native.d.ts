@@ -20,6 +20,7 @@ declare module 'native' {
     openApp: (packageName: string) => Promise<void>;
     isAccessibilityServiceEnabled: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
+    isServiceConnected: () => Promise<boolean>;  // Add this
   }
 
   const AutomatorModule: AutomatorInterface;

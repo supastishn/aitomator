@@ -47,39 +47,63 @@ export default function HomeScreen() {
   const promptAccessibility = () => {
     Alert.alert(
       "Permission Required",
-      "AutoMate needs accessibility permissions to work. You MUST manually enable it in system settings:",
+      "AutoMate needs accessibility permissions to work. You MUST manually enable it in system settings and RESTART THE APP:",
       [
         {
           text: "Open Accessibility Settings",
           onPress: openAccessibilitySettings
         },
         {
-          text: "I've Enabled It, Run Now",
+          text: "I've Enabled & Restarted",
           onPress: retryAccessibilityCheck
         }
       ]
     );
   };
 
+  // Add this retry function with polling
   const retryAccessibilityCheck = async () => {
-    const isEnabled = await AutomatorModule.isAccessibilityServiceEnabled();
-    if (isEnabled) {
-      startAutomation();
-    } else {
-      Alert.alert('Not Enabled', 'AutoMate accessibility service still disabled.');
+    try {
+      let isReady = false;
+      let attempts = 0;
+
+      while (!isReady && attempts < 5) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const [isEnabled, isConnected] = await Promise.all([
+          AutomatorModule.isAccessibilityServiceEnabled(),
+          AutomatorModule.isServiceConnected()
+        ]);
+
+        isReady = isEnabled && isConnected;
+        attempts++;
+
+        if (isReady) {
+          startAutomation();
+          return;
+        }
+      }
+
+      Alert.alert('Service Not Ready', 'Accessibility service taking too long to enable. Please restart the app');
+    } catch (error: any) {
+      Alert.alert('Error', 'Service check failed: ' + error.message);
     }
   };
 
   // Updated startAutomation to require accessibility service before running
   const startAutomation = async (force = false) => {
     try {
-      const isServiceReady = await AutomatorModule.isAccessibilityServiceEnabled();
-      console.log('Accessibility service ready:', isServiceReady);
-      if (!isServiceReady) {
+      // First check service connection
+      const [isEnabled, isConnected] = await Promise.all([
+        AutomatorModule.isAccessibilityServiceEnabled(),
+        AutomatorModule.isServiceConnected()
+      ]);
+
+      if (!isEnabled || !isConnected) {
         promptAccessibility();
         return;
       }
-    } catch (err) {
+    } catch (error: any) {
       promptAccessibility();
       return;
     }

@@ -138,7 +138,11 @@ class AutomatorService : AccessibilityService() {
     companion object {
         private var instance: AutomatorService? = null
         private var connected: Boolean = false
+
+        // Add this method
+        @JvmStatic
+        fun isConnected(): Boolean = connected
+
         fun getInstance(): AutomatorService? = instance
-        fun isConnected(): Boolean = instance?.connected ?: false
     }
 }

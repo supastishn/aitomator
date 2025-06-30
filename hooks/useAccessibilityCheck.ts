@@ -11,12 +11,12 @@ export default function useAccessibilityCheck() {
     setError(null);
 
     try {
-      if (AutomatorModule && typeof AutomatorModule.isAccessibilityServiceEnabled === 'function') {
-        const enabled = await AutomatorModule.isAccessibilityServiceEnabled();
-        setIsEnabled(enabled);
-      } else {
-        setError('Automator module not initialized - try restarting');
-      }
+      // Add service connection check
+      const [enabled, connected] = await Promise.all([
+        AutomatorModule.isAccessibilityServiceEnabled(),
+        AutomatorModule.isServiceConnected()
+      ]);
+      setIsEnabled(enabled && connected);
     } catch (err: any) {
       setError(`Accessibility check failed: ${err.message || 'Unknown error'}`);
     } finally {
