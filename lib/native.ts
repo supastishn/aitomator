@@ -37,6 +37,14 @@ const NativeBridge: AutomatorInterface = {
             throw new Error('Touch execution failed');
         }
     },
+    takeScreenshot: async () => {
+        try {
+            return await AutomatorModule.takeScreenshot();
+        } catch (error) {
+            console.error('takeScreenshot failed:', error);
+            throw new Error('takeScreenshot execution failed');
+        }
+    },
     // You can add similar wrappers for other methods as needed
 };
 
