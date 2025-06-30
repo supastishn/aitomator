@@ -17,17 +17,17 @@ import { runAutomationWorkflow } from '@/services/aiProcessor';
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  const { isEnabled, isReady, error, retry } = useAccessibilityCheck();
+  const { settingsEnabled, serviceBound, isReady, error, retry } = useAccessibilityCheck();
   const [task, setTask] = useState('');
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
-    if (isReady) {
-      checkAccessibilityOnStart();
+    if (isReady && !(settingsEnabled && serviceBound)) {
+      promptAccessibility();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady]);
+  }, [isReady, settingsEnabled, serviceBound]);
 
   const openAccessibilitySettings = () => {
     if (Platform.OS === 'android') {
@@ -37,25 +37,19 @@ export default function HomeScreen() {
     }
   };
 
-  const checkAccessibilityOnStart = () => {
-    if (!isEnabled) {
-      promptAccessibility();
-    }
-  };
-
   // Improved accessibility prompt and retry logic
   const promptAccessibility = () => {
-    console.debug("[Service] Prompting user to enable accessibility");
     Alert.alert(
-      "Permission Required",
-      "AutoMate needs accessibility permissions to work. You MUST manually enable it in system settings and RESTART THE APP:",
+      "Service Status",
+      `Accessibility Settings: ${settingsEnabled ? "ENABLED" : "DISABLED"}\n` +
+      `Service Connected: ${serviceBound ? "ACTIVE" : "OFFLINE"}`,
       [
         {
           text: "Open Accessibility Settings",
           onPress: openAccessibilitySettings
         },
         {
-          text: "I've Enabled & Restarted",
+          text: "Re-check Status",
           onPress: retryAccessibilityCheck
         }
       ]
@@ -64,46 +58,32 @@ export default function HomeScreen() {
 
   // Add this retry function with polling
   const retryAccessibilityCheck = async () => {
-    console.debug("[Service] Retrying accessibility check");
     try {
-      let isReady = false;
+      let ready = false;
       let attempts = 0;
-      let settingsEnabled = false;
-      let connected = false;
+      let lastStatus = { settingsEnabled: false, serviceBound: false };
 
-      while (!isReady && attempts < 5) {
+      while (!ready && attempts < 5) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Get both status values separately
-        const [settingsStatus, connectionStatus] = await Promise.all([
-          AutomatorModule.isAccessibilityServiceEnabled(),
-          AutomatorModule.isServiceConnected()
-        ]);
-        settingsEnabled = settingsStatus;
-        connected = connectionStatus;
-
-        isReady = settingsEnabled && connected;
+        const health = await AutomatorModule.getServiceHealthStatus();
+        lastStatus = health;
+        ready = health.settingsEnabled && health.serviceBound;
         attempts++;
 
-        // Add debug logging
-        console.debug(`[Service] Retry attempt ${attempts}: ` +
-          `Config=${settingsEnabled}, Service=${connected}`
-        );
-
-        if (isReady) {
+        if (ready) {
           startAutomation();
           return;
         }
       }
 
-      Alert.alert('Service Not Ready', 
-        'Accessibility service taking too long to enable. ' +
-        'Configuration: ' + (settingsEnabled ? 'Enabled' : 'Disabled') + ' | ' +
-        'Connection: ' + (connected ? 'Active' : 'Inactive') +
-        '\n\nPlease restart the app'
+      Alert.alert(
+        'Service Not Ready',
+        `Accessibility service taking too long to enable.\n` +
+        `Accessibility Settings: ${lastStatus.settingsEnabled ? "ENABLED" : "DISABLED"}\n` +
+        `Service Connected: ${lastStatus.serviceBound ? "ACTIVE" : "OFFLINE"}\n\n` +
+        'Please restart the app'
       );
     } catch (error: any) {
-      console.error(`[Service] Retry failed: ${error.message}`);
       Alert.alert('Service Error', 'Failed to verify accessibility status');
     }
   };
@@ -111,24 +91,8 @@ export default function HomeScreen() {
   // Updated startAutomation to require accessibility service before running
   const startAutomation = async (force = false) => {
     try {
-      console.debug("[Automation] Starting workflow");
-      
-      // First check service connection
-      const [isEnabled, isConnected] = await Promise.all([
-        AutomatorModule.isAccessibilityServiceEnabled(),
-        AutomatorModule.isServiceConnected()
-      ]);
-
-      console.debug(
-        `[Service] Automation precondition: ` +
-        `Enabled=${isEnabled}, Connected=${isConnected}`
-      );
-
-      if (!isEnabled || !isConnected) {
-        console.warn(
-          "[Service] Automation blocked - service not ready: " + 
-          `Enabled=${isEnabled}, Connected=${isConnected}`
-        );
+      const health = await AutomatorModule.getServiceHealthStatus();
+      if (!health.settingsEnabled || !health.serviceBound) {
         promptAccessibility();
         return;
       }

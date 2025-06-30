@@ -389,6 +389,9 @@ export default function SettingsScreen() {
                     case "is_accessibility_service_enabled":
                       result = await AutomatorModule.isAccessibilityServiceEnabled();
                       break;
+                    case "getServiceHealthStatus":
+                      result = await AutomatorModule.getServiceHealthStatus();
+                      break;
                     default:
                       throw new Error(`Unknown function: ${functionName}`);
                   }

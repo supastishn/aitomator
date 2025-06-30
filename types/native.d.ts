@@ -22,6 +22,10 @@ declare module 'native' {
     isAccessibilityServiceEnabled: () => Promise<boolean>;
     isServiceConnected: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
+    getServiceHealthStatus: () => Promise<{
+      settingsEnabled: boolean;
+      serviceBound: boolean;
+    }>;
   }
 
   const AutomatorModule: AutomatorInterface;
