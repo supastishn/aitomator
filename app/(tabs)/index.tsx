@@ -11,23 +11,24 @@ import {
   ScrollView,
 } from 'react-native';
 import AutomatorModule from '@/lib/native';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 import { runAutomationWorkflow } from '@/services/aiProcessor';
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  const { settingsEnabled, serviceBound, isReady, error, retry } = useAccessibilityCheck();
   const [task, setTask] = useState('');
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
 
-  useEffect(() => {
-    if (isReady && !(settingsEnabled && serviceBound)) {
-      promptAccessibility();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, settingsEnabled, serviceBound]);
+  // Accessibility hook setup
+  const { 
+    settingsEnabled, 
+    serviceBound, 
+    checkAccessibility,
+    isReady,
+    error 
+  } = useAccessibilityCheck();
 
   const openAccessibilitySettings = () => {
     if (Platform.OS === 'android') {
@@ -37,74 +38,34 @@ export default function HomeScreen() {
     }
   };
 
-  // Improved accessibility prompt and retry logic
-  const promptAccessibility = () => {
+  const showAccessibilityPrompt = (health: {
+    settingsEnabled: boolean;
+    serviceBound: boolean;
+  }) => {
     Alert.alert(
-      "Service Status",
-      `Accessibility Settings: ${settingsEnabled ? "ENABLED" : "DISABLED"}\n` +
-      `Service Connected: ${serviceBound ? "ACTIVE" : "OFFLINE"}`,
+      "Service Required",
+      `App automation requires accessibility service. Status:\n
+      Settings: ${health.settingsEnabled ? "ON" : "OFF"}
+      Connection: ${health.serviceBound ? "ACTIVE" : "INACTIVE"}`,
       [
         {
-          text: "Open Accessibility Settings",
+          text: "Open Settings",
           onPress: openAccessibilitySettings
         },
         {
-          text: "Re-check Status",
-          onPress: retryAccessibilityCheck
+          text: "Restart App",
+          onPress: () => { checkAccessibility() }
         }
       ]
     );
   };
 
-  // Add this retry function with polling
-  const retryAccessibilityCheck = async () => {
-    try {
-      let ready = false;
-      let attempts = 0;
-      let lastStatus = { settingsEnabled: false, serviceBound: false };
-
-      while (!ready && attempts < 5) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const health = await AutomatorModule.getServiceHealthStatus();
-        lastStatus = health;
-        ready = health.settingsEnabled && health.serviceBound;
-        attempts++;
-
-        if (ready) {
-          startAutomation();
-          return;
-        }
-      }
-
-      Alert.alert(
-        'Service Not Ready',
-        `Accessibility service taking too long to enable.\n` +
-        `Accessibility Settings: ${lastStatus.settingsEnabled ? "ENABLED" : "DISABLED"}\n` +
-        `Service Connected: ${lastStatus.serviceBound ? "ACTIVE" : "OFFLINE"}\n\n` +
-        'Please restart the app'
-      );
-    } catch (error: any) {
-      Alert.alert('Service Error', 'Failed to verify accessibility status');
-    }
-  };
-
-  // Updated startAutomation to require accessibility service before running
-  const startAutomation = async (force = false) => {
-    try {
-      const health = await AutomatorModule.getServiceHealthStatus();
-      if (!health.settingsEnabled || !health.serviceBound) {
-        promptAccessibility();
-        return;
-      }
-    } catch (error: any) {
-      promptAccessibility();
-      return;
-    }
-
+  const startAutomation = async () => {
     setIsRunning(true);
     setStatus('Starting automation...');
 
     try {
+      // Normal automation workflow
       const screenshot = await AutomatorModule.takeScreenshot();
       setStatus('Captured initial screenshot');
       setScreenshotUri(screenshot);
@@ -120,7 +81,25 @@ export default function HomeScreen() {
       );
       setStatus('Automation complete!');
     } catch (error: any) {
-      setStatus(`Error: ${error.message}`);
+      // Systematically catch native module errors
+      let effectiveError = error.message || 'Unknown error';
+      
+      // Check accessibility only when native module fails
+      try {
+        const health = await checkAccessibility();
+        if (!health.settingsEnabled || !health.serviceBound) {
+          // Show accessibility prompt if health check fails
+          showAccessibilityPrompt(health);
+        } else {
+          // Detailed error handling for other native errors
+          effectiveError += '\n({tech_details})';
+        }
+      } catch (healthErr: any) {
+        // Combined error reporting
+        effectiveError += `\nAccessibility check also failed: ${healthErr.message}`;
+      }
+      
+      setStatus(`Automation error: ${effectiveError}`);
     } finally {
       setIsRunning(false);
     }
