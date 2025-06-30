@@ -47,7 +47,14 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun performTouch(x: Float, y: Float, amount: Int?, spacing: Int?, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
-                ?: throw Exception("Service unavailable")
+            if (service == null) {
+                throw Exception("Automator accessibility service not active. Enable it in system settings and restart the app")
+            }
+
+            // Validate required parameters with type checking
+            if (x !in 0f..1f || y !in 0f..1f) {
+                throw Exception("Invalid coordinates ($x,$y): Must be normalized values between 0 and 1")
+            }
 
             // Provide defaults for optional parameters
             val touchAmount = amount ?: 1
@@ -57,10 +64,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val screenX = x * size.width
             val screenY = y * size.height
 
-            // Add debug log
-            Log.d("AutoMateDebug",
-                "Touch: normalized ($x, $y) -> pixels ($screenX, $screenY) " +
-                "amount: $touchAmount, spacing: ${touchSpacing}ms"
+            // Capture service initialization status in debug log
+            Log.d("AutoMateDebug", 
+                "Touch: Service=${service.hashCode()}, " +
+                "normalized=($x, $y) -> pixels=($screenX, $screenY) " +
+                "amount=$touchAmount, spacing=${touchSpacing}ms"
             )
 
             for (i in 0 until touchAmount) {

@@ -61,51 +61,43 @@ export default function HomeScreen() {
     }
   };
 
-  // Updated promptAccessibility to include "Run Anyway"
+  // Improved accessibility prompt and retry logic
   const promptAccessibility = () => {
     Alert.alert(
-      "Accessibility Service Required",
-      "This app requires accessibility permissions for automation features. Please enable AutoMate in accessibility settings.",
+      "Permission Required",
+      "AutoMate needs accessibility permissions to work. You MUST manually enable it in system settings:",
       [
         {
           text: "Open Accessibility Settings",
           onPress: openAccessibilitySettings
         },
         {
-          text: "Run Anyway",
-          onPress: () => startAutomation(true)
-        },
-        {
-          text: "Cancel",
-          style: "cancel"
+          text: "I've Enabled It, Run Now",
+          onPress: retryAccessibilityCheck
         }
       ]
     );
   };
 
-  // Updated startAutomation to accept force param and handle error/retry/run anyway
-  const startAutomation = async (force = false) => {
-    // Display alert if accessibility isn't ready and we're not forcing
-    if (error && !force) {
-      Alert.alert(
-        "Accessibility Warning",
-        `${error}\n\nAutomation may not work properly.`,
-        [
-          {
-            text: "Run Anyway",
-            onPress: () => startAutomation(true)
-          },
-          {
-            text: "Retry Check",
-            onPress: retry
-          },
-          { text: "Cancel" }
-        ]
-      );
-      return;
+  const retryAccessibilityCheck = async () => {
+    const isEnabled = await AutomatorModule.isAccessibilityServiceEnabled();
+    if (isEnabled) {
+      startAutomation();
+    } else {
+      Alert.alert('Not Enabled', 'AutoMate accessibility service still disabled.');
     }
+  };
 
-    if (!isEnabled && !force) {
+  // Updated startAutomation to require accessibility service before running
+  const startAutomation = async (force = false) => {
+    try {
+      const isServiceReady = await AutomatorModule.isAccessibilityServiceEnabled();
+      console.log('Accessibility service ready:', isServiceReady);
+      if (!isServiceReady) {
+        promptAccessibility();
+        return;
+      }
+    } catch (err) {
       promptAccessibility();
       return;
     }
