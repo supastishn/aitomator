@@ -22,6 +22,7 @@ const NativeBridge: AutomatorInterface = {
     ...AutomatorModule,
     // Explicitly bind these methods to ensure they're present
     isAccessibilityServiceEnabled: AutomatorModule.isAccessibilityServiceEnabled,
+    // Add explicit method binding for isServiceConnected
     isServiceConnected: AutomatorModule.isServiceConnected,
     performTouch: async (
         x: number,
@@ -50,6 +51,12 @@ if (!AutomatorModule.isAccessibilityServiceEnabled) {
         }
         throw new Error('isAccessibilityServiceEnabled is not available on AutomatorModule');
     };
+}
+
+// Add fallback for isServiceConnected if it's missing
+if (!AutomatorModule.isServiceConnected) {
+    // @ts-ignore
+    NativeBridge.isServiceConnected = async () => false; // Safe default
 }
 
 export default NativeBridge;
