@@ -20,6 +20,9 @@ interface AutomatorInterface extends NativeModule {
 // Add proper error handling for native commands
 const NativeBridge: AutomatorInterface = {
     ...AutomatorModule,
+    // Explicitly bind these methods to ensure they're present
+    isAccessibilityServiceEnabled: AutomatorModule.isAccessibilityServiceEnabled,
+    isServiceConnected: AutomatorModule.isServiceConnected,
     performTouch: async (
         x: number,
         y: number,
@@ -35,5 +38,18 @@ const NativeBridge: AutomatorInterface = {
     },
     // You can add similar wrappers for other methods as needed
 };
+
+// Add fallback proxy for isAccessibilityServiceEnabled if missing
+if (!AutomatorModule.isAccessibilityServiceEnabled) {
+    // @ts-ignore
+    NativeBridge.isAccessibilityServiceEnabled = async () => {
+        // Fallback to a possible alternative method
+        if (AutomatorModule.isServiceEnabled) {
+            const result = await AutomatorModule.isServiceEnabled();
+            return result;
+        }
+        throw new Error('isAccessibilityServiceEnabled is not available on AutomatorModule');
+    };
+}
 
 export default NativeBridge;

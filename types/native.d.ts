@@ -18,9 +18,10 @@ declare module 'native' {
     typeText: (text: string) => Promise<void>;
     searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
     openApp: (packageName: string) => Promise<void>;
+    // Ensure both accessibility methods are declared
     isAccessibilityServiceEnabled: () => Promise<boolean>;
+    isServiceConnected: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
-    isServiceConnected: () => Promise<boolean>;  // Add this
   }
 
   const AutomatorModule: AutomatorInterface;
