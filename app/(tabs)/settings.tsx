@@ -382,6 +382,13 @@ export default function SettingsScreen() {
                     case "open_app":
                       result = await AutomatorModule.openApp(args.packageName);
                       break;
+                    case "open_link":
+                    case "open_url":
+                      await import('expo-web-browser').then(WebBrowser =>
+                        WebBrowser.openBrowserAsync(args.url)
+                      );
+                      result = "Browser opened";
+                      break;
                     case "typeText":
                     case "type_text":
                     case "type":

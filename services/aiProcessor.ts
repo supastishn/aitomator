@@ -2,6 +2,7 @@ import { Dimensions } from 'react-native';
 import { loadOpenAISettings } from '@/lib/openaiSettings';
 import AutomatorModule from '@/lib/native';
 import { XMLParser } from 'fast-xml-parser';
+import * as WebBrowser from 'expo-web-browser';
 
  // Tool definitions for OpenAI function calling
 const TOOLS = [
@@ -106,6 +107,23 @@ const TOOLS = [
           }
         },
         required: ["packageName"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "open_link",
+      description: "Opens a URL in the device's browser or appropriate app",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { 
+            type: "string",
+            description: "Full URL to open including protocol (http:// or https://)"
+          }
+        },
+        required: ["url"]
       }
     }
   },
@@ -427,6 +445,19 @@ async function executeSubtask(
                 console.log(`Tool call ${toolCall.id} result:`, resultText);
                 throw new Error(args.error);
               }
+            } else if (name === 'open_link') {
+              if (typeof args.url !== 'string') {
+                throw new Error('URL must be a string');
+              }
+              await WebBrowser.openBrowserAsync(args.url);
+              const resultText = "URL opened successfully";
+              // LOG TOOL CALL RESULT
+              console.log(`Tool call ${toolCall.id} result:`, resultText);
+              messages.push({
+                role: "tool",
+                content: resultText,
+                tool_call_id: toolCall.id
+              });
             } else {
               // Update screenshot after each action
               const newScreenshot = await AutomatorModule.takeScreenshot();
