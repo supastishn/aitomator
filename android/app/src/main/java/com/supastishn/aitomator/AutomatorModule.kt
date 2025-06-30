@@ -225,9 +225,48 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun isAccessibilityServiceEnabled(promise: Promise) {
         try {
-            // Replace settings check with connection check
-            promise.resolve(AutomatorService.isConnected())
+            // Get our service name
+            val serviceName = android.content.ComponentName(
+                reactApplicationContext,
+                AutomatorService::class.java
+            )
+
+            // Check if accessibility is enabled system-wide
+            val accessibilityEnabled = android.provider.Settings.Secure.getInt(
+                reactApplicationContext.contentResolver,
+                android.provider.Settings.Secure.ACCESSIBILITY_ENABLED,
+                0
+            ) == 1
+
+            if (!accessibilityEnabled) {
+                promise.resolve(false)
+                return
+            }
+
+            // Get the list of enabled accessibility services
+            val servicesList = android.provider.Settings.Secure.getString(
+                reactApplicationContext.contentResolver,
+                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: ""
+
+            // Check if our service is in the list
+            val serviceEnabled = servicesList.split(":").any { id ->
+                id.equals(serviceName.flattenToString(), ignoreCase = true)
+            }
+
+            // Log details for diagnostics
+            android.util.Log.d(
+                "AutoMateDebug",
+                "Accessibility status - " +
+                "service: ${serviceName.flattenToString()}, " +
+                "enabled: $serviceEnabled, " +
+                "system enabled: $accessibilityEnabled, " +
+                "services: $servicesList"
+            )
+
+            promise.resolve(serviceEnabled)
         } catch (e: Exception) {
+            android.util.Log.e("AutoMateDebug", "Accessibility check error: ${e.message}")
             promise.reject("ACCESSIBILITY_CHECK_ERROR", e.message)
         }
     }
