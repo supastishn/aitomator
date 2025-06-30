@@ -109,20 +109,6 @@ const TOOLS = [
       }
     }
   },
-  {
-    type: "function",
-    function: {
-      name: "open_link",
-      description: "Opens the specified URL in browser or app. Use this if app cannot be found through search",
-      parameters: {
-        type: "object",
-        properties: {
-          url: { type: "string" }
-        },
-        required: ["url"]
-      }
-    }
-  }
 ];
 
 const TOOL_DATA = TOOLS.map(tool => 
@@ -441,17 +427,6 @@ async function executeSubtask(
                 console.log(`Tool call ${toolCall.id} result:`, resultText);
                 throw new Error(args.error);
               }
-            } else if (name === 'open_link') {
-              await AutomatorModule.openLink(args.url);
-              const newScreenshot = await AutomatorModule.takeScreenshot();
-              updateScreenshot(newScreenshot);
-              lastScreenshot = newScreenshot;
-              messages.push({
-                role: "tool",
-                content: "Link opened successfully",
-                tool_call_id: toolCall.id
-              });
-              break;
             } else {
               // Update screenshot after each action
               const newScreenshot = await AutomatorModule.takeScreenshot();

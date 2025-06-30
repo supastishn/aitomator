@@ -387,9 +387,6 @@ export default function SettingsScreen() {
                     case "type":
                       result = await AutomatorModule.typeText(args.text);
                       break;
-                    case "open_link":
-                      result = await AutomatorModule.openLink(args.url);
-                      break;
                     case "takeScreenshot":
                     case "take_screenshot":
                       result = await AutomatorModule.takeScreenshot();

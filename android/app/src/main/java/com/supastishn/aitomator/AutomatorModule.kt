@@ -224,19 +224,6 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
 
-    @ReactMethod
-    fun openLink(url: String, promise: Promise) {
-        try {
-            val context = currentActivity ?: reactApplicationContext
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-            promise.resolve(true)
-        } catch (e: Exception) {
-            Log.e("AutoMate", "openLink error: ${e.message}")
-            promise.reject("OPEN_LINK_ERROR", e.message)
-        }
-    }
 
     @ReactMethod
     fun getScreenDimensions(promise: Promise) {

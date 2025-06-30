@@ -13,7 +13,6 @@ interface AutomatorInterface extends NativeModule {
     searchApps: (query: string) => Promise<{appName: string, packageName: string}[]>;
     openApp: (packageName: string) => Promise<void>;
     takeScreenshot: () => Promise<string>;
-    openLink: (url: string) => Promise<void>;
     getScreenDimensions: () => Promise<{ width: number; height: number }>;
 }
 
