@@ -8,32 +8,19 @@ import {
   TouchableOpacity,
   Platform,
   TextInput,
-  Clipboard,
-  PanResponder,
-  TouchableHighlight,
   ScrollView,
 } from 'react-native';
 import AutomatorModule from '@/lib/native';
-import { useState, useEffect, useRef } from 'react';
-import ViewShot from 'react-native-view-shot';
+import { useState, useEffect } from 'react';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 import { runAutomationWorkflow } from '@/services/aiProcessor';
-import Svg, { Polyline } from 'react-native-svg';
-
-interface Point {
-  x: number;
-  y: number;
-}
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
-  // Updated hook call
   const { isEnabled, isReady, error, retry } = useAccessibilityCheck();
   const [task, setTask] = useState('');
   const [status, setStatus] = useState('Idle');
   const [isRunning, setIsRunning] = useState(false);
-
-  const previewLayout = useRef({ x: 0, y: 0, width: 1, height: 1 });
 
   useEffect(() => {
     if (isReady) {
@@ -316,57 +303,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#f1f5f9',
     borderWidth: 2,
-    // borderColor removed, now set dynamically
   },
   preview: {
     width: '100%',
     height: 400,
-  },
-  commandSection: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  commandHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  commandTitle: {
-    color: '#f1f5f9',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  commandInput: {
-    backgroundColor: '#334155',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    color: '#e2e8f0',
-    borderWidth: 1,
-    borderColor: '#475569',
-  },
-  copyButton: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  copyButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-    fontSize: 14,
   },
 });
