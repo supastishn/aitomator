@@ -231,7 +231,13 @@ export default function HomeScreen() {
         <View style={styles.debugHeader}>
           <Text style={styles.sectionTitle}>Debug Mode</Text>
           <TouchableOpacity
-            style={styles.debugButton}
+            style={[
+              styles.debugButton,
+              {
+                backgroundColor: debugMode ? '#ef4444' : '#8b5cf6',
+                shadowColor: debugMode ? '#ef4444' : '#8b5cf6'
+              }
+            ]}
             onPress={() => setDebugMode(!debugMode)}
             activeOpacity={0.8}
           >
@@ -251,7 +257,10 @@ export default function HomeScreen() {
         <View style={styles.previewSection}>
           <Text style={styles.sectionTitle}>Screen Preview</Text>
           <View
-            style={styles.previewContainer}
+            style={[
+              styles.previewContainer,
+              { borderColor: debugMode ? '#8b5cf6' : '#e2e8f0' }
+            ]}
             onLayout={e => previewLayout.current = e.nativeEvent.layout}
             {...panResponder.panHandlers}
           >
@@ -427,11 +436,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   debugButton: {
-    backgroundColor: debugMode ? '#ef4444' : '#8b5cf6',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
-    shadowColor: debugMode ? '#ef4444' : '#8b5cf6',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -463,7 +470,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#f1f5f9',
     borderWidth: 2,
-    borderColor: debugMode ? '#8b5cf6' : '#e2e8f0',
+    // borderColor removed, now set dynamically
   },
   preview: {
     width: '100%',
