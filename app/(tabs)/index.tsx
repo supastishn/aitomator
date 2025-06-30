@@ -209,8 +209,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    padding: 24,
-    gap: 24,
+    // padding removed since header is now inside
   },
   taskSection: {
     backgroundColor: '#ffffff',
