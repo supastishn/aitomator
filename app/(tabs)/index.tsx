@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as LinkingExpo from 'expo-linking';
 import AutomatorModule from '@/lib/native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 import { runAutomationWorkflow } from '@/services/aiProcessor';
 import { Modal } from 'react-native';
@@ -30,6 +30,13 @@ export default function HomeScreen() {
     isAccessibilityEnabled,
     checkAccessibility,
   } = useAccessibilityCheck();
+
+  // Automatically start automation after user ignores warning
+  useEffect(() => {
+    if (ignoreWarning) {
+      startAutomationAfterCheck();
+    }
+  }, [ignoreWarning]);
 
   const openAccessibilitySettings = () => {
     if (Platform.OS === 'android') {
