@@ -68,8 +68,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val touchSpacing = spacing ?: 0
 
             val size = service.screenSize
-            val screenX = (x * size.width).toDouble()
-            val screenY = (y * size.height).toDouble()
+            val screenX = (x * size.width).toFloat()
+            val screenY = (y * size.height).toFloat()
 
             // Capture service initialization status in debug log
             Log.d("AutoMateDebug", 

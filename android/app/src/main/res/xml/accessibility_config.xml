@@ -5,7 +5,7 @@
     android:accessibilityFlags="
         flagRequestFilterKeyEvents|
         flagReportViewIds|
-        flagRequestTouchExplorationMode|
+        FLAG_REQUEST_TOUCH_EXPLORATION_MODE|
         flagRequestEnhancedWebAccessibility|
         flagRetrieveInteractiveWindows"
     android:canRetrieveWindowContent="true"

@@ -115,7 +115,7 @@ class AutomatorService : AccessibilityService() {
             ).toFloat()
         }
         // 1ms per pixel + minimum 100ms
-        return (totalDistance * 1.0).toLong() + 100
+        return (totalDistance * 1.0).toInt() + 100
     }
 
     fun typeText(text: String): Boolean {
