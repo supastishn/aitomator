@@ -14,6 +14,13 @@ import android.net.Uri
 import com.facebook.react.module.annotations.ReactModule
 import androidx.annotation.UiThread
 
+// Add these imports at the top of the file
+import android.content.Context
+import android.view.WindowManager
+import android.os.Build
+import android.util.DisplayMetrics
+import android.util.Size
+
 @ReactModule(name = "AutomatorModule")
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
 
@@ -61,8 +68,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val touchSpacing = spacing ?: 0
 
             val size = service.screenSize
-            val screenX = x * size.width
-            val screenY = y * size.height
+            val screenX = (x * size.width).toDouble()
+            val screenY = (y * size.height).toDouble()
 
             // Capture service initialization status in debug log
             Log.d("AutoMateDebug", 
@@ -205,7 +212,7 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
             // Find matching launchable app
             val launchableApps = pm.queryIntentActivities(mainIntent, android.content.pm.PackageManager.MATCH_ALL)
-            val targetApp = launchableApps.find {
+            var targetApp = launchableApps.find {
                 it.activityInfo.packageName == packageNameToOpen
             }
 
@@ -220,11 +227,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                 reactApplicationContext.startActivity(launchIntent)
                 promise.resolve(true)
             } ?: run {
-                // Update error message format
+                val e = Exception("Package '$packageNameToOpen' not found")
                 promise.reject(
                     "APP_NOT_FOUND",
-                    "Package '$packageNameToOpen' not found. Suggest using web version.",
-                    packageNameToOpen // Add this as the throwable cause
+                    "Package '$packageNameToOpen' not found",
+                    e
                 )
             }
         } catch (e: Exception) {
@@ -288,19 +295,20 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     fun getScreenDimensions(promise: Promise) {
         try {
             val windowManager = reactApplicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            val size = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val dimensions = Arguments.createMap()
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val bounds = windowManager.currentWindowMetrics.bounds
-                Pair(bounds.width(), bounds.height())
+                dimensions.putInt("width", bounds.width())
+                dimensions.putInt("height", bounds.height())
             } else {
                 val displayMetrics = DisplayMetrics()
                 @Suppress("DEPRECATION")
                 windowManager.defaultDisplay.getMetrics(displayMetrics)
-                Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
+                dimensions.putInt("width", displayMetrics.widthPixels)
+                dimensions.putInt("height", displayMetrics.heightPixels)
             }
-
-            val dimensions = Arguments.createMap()
-            dimensions.putInt("width", size.first)
-            dimensions.putInt("height", size.second)
+            
             promise.resolve(dimensions)
         } catch (e: Exception) {
             promise.reject("DIMENSIONS_ERROR", "Failed to get screen dimensions", e)
