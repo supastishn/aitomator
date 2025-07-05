@@ -58,18 +58,6 @@ class MainActivity : ReactActivity() {
     )
   }
 
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode == REQUEST_MEDIA_PROJECTION) {
-      if (resultCode == Activity.RESULT_OK && data != null) {
-        // This is handled in AutomatorModule's onActivityResult to resolve promise
-      } else {
-        // Handle permission denial if needed
-        mMediaProjection = null
-      }
-    }
-  }
-
   /**
     * Align the back button behavior with Android S
     * where moving root activities to background instead of finishing activities.
