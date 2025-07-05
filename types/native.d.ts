@@ -20,6 +20,7 @@ declare module 'native' {
     openApp: (packageName: string) => Promise<void>;  // Ensure return type is Promise<void>
     // Only system-level accessibility check
     isAccessibilityServiceEnabled: () => Promise<boolean>;
+    requestScreenCapture: () => Promise<boolean>;
     getScreenDimensions: () => Promise<ScreenDimensions>;
     getServiceHealthStatus: () => Promise<{
       settingsEnabled: boolean;

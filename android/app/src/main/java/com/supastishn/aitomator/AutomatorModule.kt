@@ -20,22 +20,98 @@ import android.view.WindowManager
 import android.os.Build
 import android.util.DisplayMetrics
 import android.util.Size
+import android.app.Activity
+import com.facebook.react.bridge.ActivityEventListener
+import android.hardware.display.DisplayManager
+import android.media.ImageReader
+import android.graphics.PixelFormat
+import android.media.projection.MediaProjectionManager
 
 @ReactModule(name = "AutomatorModule")
-class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
 
     private val context = reactContext
+    private var mScreenCapturePromise: Promise? = null
+
+    init {
+        reactContext.addActivityEventListener(this)
+    }
 
     override fun getName() = "AutomatorModule"
+
+    override fun onNewIntent(intent: Intent?) {}
+
+    override fun onActivityResult(activity: Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == MainActivity.REQUEST_MEDIA_PROJECTION) {
+            if (resultCode == Activity.RESULT_OK) {
+                mScreenCapturePromise?.resolve(true)
+            } else {
+                mScreenCapturePromise?.reject("PERMISSION_DENIED", "User denied screen capture permission")
+            }
+            mScreenCapturePromise = null
+        }
+    }
+
+    @ReactMethod
+    fun requestScreenCapture(promise: Promise) {
+        val activity = currentActivity
+        if (activity == null) {
+            promise.reject("NO_ACTIVITY", "Current activity not available.")
+            return
+        }
+
+        if (MainActivity.mMediaProjection != null) {
+            promise.resolve(true)
+            return
+        }
+
+        mScreenCapturePromise = promise
+        val mediaProjectionManager = reactApplicationContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        activity.startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), MainActivity.REQUEST_MEDIA_PROJECTION)
+    }
 
     // Update takeScreenshot to return base64 string
     @ReactMethod
     fun takeScreenshot(promise: Promise) {
+        val mediaProjection = MainActivity.mMediaProjection
+        if (mediaProjection == null) {
+            promise.reject("NO_PERMISSION", "Screen capture permission not granted. Please request it first.")
+            return
+        }
+
+        val windowManager = reactApplicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getRealMetrics(metrics)
+        val width = metrics.widthPixels
+        val height = metrics.heightPixels
+        val density = metrics.densityDpi
+
+        val imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+        val virtualDisplay = mediaProjection.createVirtualDisplay(
+            "ScreenCapture", width, height, density,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            imageReader.surface, null, null)
+
+        var image: android.media.Image? = null
+        var bitmap: Bitmap? = null
+
         try {
-            val rootView = currentActivity?.window?.decorView?.rootView
-            rootView?.isDrawingCacheEnabled = true
-            val bitmap = Bitmap.createBitmap(rootView?.drawingCache ?: return)
-            rootView?.isDrawingCacheEnabled = false
+            Thread.sleep(300) // Give time for the image to be available.
+            image = imageReader.acquireLatestImage()
+
+            if (image == null) {
+                promise.reject("CAPTURE_FAILED", "Failed to acquire image.")
+                return
+            }
+
+            val planes = image.planes
+            val buffer = planes[0].buffer
+            val pixelStride = planes[0].pixelStride
+            val rowStride = planes[0].rowStride
+            val rowPadding = rowStride - pixelStride * width
+            var tempBitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888)
+            tempBitmap.copyPixelsFromBuffer(buffer)
+            bitmap = Bitmap.createBitmap(tempBitmap, 0, 0, width, height) // Crop padding
 
             // Convert to JPEG with 90% quality
             val stream = ByteArrayOutputStream()
@@ -45,6 +121,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             promise.resolve(base64)
         } catch (e: Exception) {
             promise.reject("SCREENSHOT_ERROR", e.message)
+        } finally {
+            bitmap?.recycle()
+            image?.close()
+            virtualDisplay.release()
+            imageReader.close()
         }
     }
 
