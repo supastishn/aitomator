@@ -280,8 +280,7 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
             // Add improved debug log for config check
             Log.d("AutoMateDebug", 
-                "[Service] Config Check: Enabled=$serviceEnabled, " +
-                "SystemEnabled=$accessibilityEnabled"
+                "[Service] Config Check: Enabled=$serviceEnabled, SystemEnabled=$accessibilityEnabled"
             )
             promise.resolve(serviceEnabled)
         } catch (e: Exception) {
