@@ -1,7 +1,12 @@
 package com.supastishn.aitomator
 import expo.modules.splashscreen.SplashScreenManager
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.os.Build
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 
 import com.facebook.react.ReactActivity
@@ -12,6 +17,13 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
+  private var mMediaProjectionManager: MediaProjectionManager? = null
+
+  companion object {
+      const val REQUEST_MEDIA_PROJECTION = 1
+      var mMediaProjection: MediaProjection? = null
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
@@ -21,6 +33,7 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
+    mMediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
   }
 
   /**
@@ -43,6 +56,18 @@ class MainActivity : ReactActivity() {
             fabricEnabled
         ) {}
     )
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (requestCode == REQUEST_MEDIA_PROJECTION) {
+      if (resultCode == Activity.RESULT_OK && data != null) {
+        mMediaProjection = mMediaProjectionManager?.getMediaProjection(resultCode, data)
+      } else {
+        // Handle permission denial if needed
+        mMediaProjection = null
+      }
+    }
   }
 
   /**

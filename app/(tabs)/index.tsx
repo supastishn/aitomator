@@ -57,6 +57,9 @@ export default function HomeScreen() {
     setStatus('Starting automation...');
 
     try {
+      // Request screen capture permission on Android before proceeding
+      if (Platform.OS === 'android') await AutomatorModule.requestScreenCapture();
+
       // Normal automation workflow
       const screenshot = await AutomatorModule.takeScreenshot();
       setStatus('Captured initial screenshot');

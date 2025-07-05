@@ -8,6 +8,7 @@ import { NativeModule } from 'react-native';
 interface AutomatorInterface extends NativeModule {
     isAccessibilityServiceEnabled: () => Promise<boolean>;
     isServiceConnected: () => Promise<boolean>;
+    requestScreenCapture: () => Promise<boolean>;
     performTouch: (x: number, y: number, amount?: number, spacing?: number) => Promise<{ x: number; y: number }>;
     performSwipe: (breakpoints: {x: number, y: number}[]) => Promise<void>;
     typeText: (text: string) => Promise<void>;
@@ -28,6 +29,7 @@ const NativeBridge: AutomatorInterface = {
     isAccessibilityServiceEnabled: AutomatorModule.isAccessibilityServiceEnabled,
     // Add explicit method binding for isServiceConnected
     isServiceConnected: AutomatorModule.isServiceConnected,
+    requestScreenCapture: AutomatorModule.requestScreenCapture,
     performTouch: async (
         x: number,
         y: number,
@@ -83,6 +85,14 @@ if (!AutomatorModule.isAccessibilityServiceEnabled) {
 if (!AutomatorModule.isServiceConnected) {
     // @ts-ignore
     NativeBridge.isServiceConnected = async () => false; // Safe default
+}
+
+if (!AutomatorModule.requestScreenCapture) {
+    // @ts-ignore
+    NativeBridge.requestScreenCapture = async () => {
+        console.warn("requestScreenCapture is not available on this platform.");
+        return false;
+    };
 }
 
 export default NativeBridge;
