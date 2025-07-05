@@ -104,4 +104,11 @@ if (!AutomatorModule.stopScreenCaptureService) {
     };
 }
 
+if (!AutomatorModule.stopScreenCaptureService) {
+    // @ts-ignore
+    NativeBridge.stopScreenCaptureService = async () => {
+        console.warn("stopScreenCaptureService is not available on this platform.");
+    };
+}
+
 export default NativeBridge;
