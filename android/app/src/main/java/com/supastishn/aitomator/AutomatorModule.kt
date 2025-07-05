@@ -65,9 +65,28 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             return
         }
 
+        // Start foreground service for screen capture
+        val serviceIntent = Intent(reactApplicationContext, ScreenCaptureService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            reactApplicationContext.startForegroundService(serviceIntent)
+        } else {
+            reactApplicationContext.startService(serviceIntent)
+        }
+
         mScreenCapturePromise = promise
         val mediaProjectionManager = reactApplicationContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         activity.startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), MainActivity.REQUEST_MEDIA_PROJECTION)
+    }
+
+    @ReactMethod
+    fun stopScreenCaptureService(promise: Promise) {
+        try {
+            val serviceIntent = Intent(reactApplicationContext, ScreenCaptureService::class.java)
+            reactApplicationContext.stopService(serviceIntent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("SERVICE_STOP_ERROR", e.message, e)
+        }
     }
 
     // Update takeScreenshot to return base64 string

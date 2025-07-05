@@ -62,7 +62,7 @@ class MainActivity : ReactActivity() {
     super.onActivityResult(requestCode, resultCode, data)
     if (requestCode == REQUEST_MEDIA_PROJECTION) {
       if (resultCode == Activity.RESULT_OK && data != null) {
-        mMediaProjection = mMediaProjectionManager?.getMediaProjection(resultCode, data)
+        // This is handled in AutomatorModule's onActivityResult to resolve promise
       } else {
         // Handle permission denial if needed
         mMediaProjection = null

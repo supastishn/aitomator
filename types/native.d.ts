@@ -25,6 +25,7 @@ declare module 'native' {
     getServiceHealthStatus: () => Promise<{
       settingsEnabled: boolean;
     }>;
+    stopScreenCaptureService: () => Promise<void>;
   }
 
   const AutomatorModule: AutomatorInterface;

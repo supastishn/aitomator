@@ -112,6 +112,13 @@ export default function HomeScreen() {
       setStatus(`Automation error: ${effectiveError}`);
     } finally {
       setIsRunning(false);
+      if (Platform.OS === 'android') {
+        try {
+          await AutomatorModule.stopScreenCaptureService();
+        } catch (e) {
+          console.error("Failed to stop screen capture service", e);
+        }
+      }
     }
   };
 

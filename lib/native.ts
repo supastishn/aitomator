@@ -16,6 +16,7 @@ interface AutomatorInterface extends NativeModule {
     openApp: (packageName: string) => Promise<void>;
     takeScreenshot: () => Promise<string>;
     getScreenDimensions: () => Promise<{ width: number; height: number }>;
+    stopScreenCaptureService: () => Promise<void>;
 }
 
 // Add proper error handling for native commands
@@ -92,6 +93,13 @@ if (!AutomatorModule.requestScreenCapture) {
     NativeBridge.requestScreenCapture = async () => {
         console.warn("requestScreenCapture is not available on this platform.");
         return false;
+    };
+}
+
+if (!AutomatorModule.stopScreenCaptureService) {
+    // @ts-ignore
+    NativeBridge.stopScreenCaptureService = async () => {
+        console.warn("stopScreenCaptureService is not available on this platform.");
     };
 }
 
