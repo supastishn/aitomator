@@ -271,15 +271,15 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             ) ?: ""
 
             android.util.Log.d("AutoMateDebug", "Enabled services: $servicesList")
-            
+
             val serviceEnabled = servicesList.split(":").any { id ->
                 // Check both representations of service names
-                id.equals(longName, ignoreCase = true) || 
+                id.equals(longName, ignoreCase = true) ||
                 id.equals(shortName, ignoreCase = true)
             }
 
             // Add improved debug log for config check
-            Log.d("AutoMateDebug", 
+            Log.d("AutoMateDebug",
                 "[Service] Config Check: Enabled=$serviceEnabled, SystemEnabled=$accessibilityEnabled"
             )
             promise.resolve(serviceEnabled)
