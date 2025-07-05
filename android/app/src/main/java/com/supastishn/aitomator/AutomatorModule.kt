@@ -43,7 +43,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
     override fun onActivityResult(activity: Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == MainActivity.REQUEST_MEDIA_PROJECTION) {
-            if (resultCode == Activity.RESULT_OK) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                MainActivity.mMediaProjection = (reactApplicationContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager).getMediaProjection(resultCode, data)
                 mScreenCapturePromise?.resolve(true)
             } else {
                 mScreenCapturePromise?.reject("PERMISSION_DENIED", "User denied screen capture permission")

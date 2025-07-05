@@ -52,6 +52,7 @@ const NativeBridge: AutomatorInterface = {
             throw new Error('takeScreenshot execution failed');
         }
     },
+    stopScreenCaptureService: AutomatorModule.stopScreenCaptureService,
     // You can add similar wrappers for other methods as needed
 };
 
