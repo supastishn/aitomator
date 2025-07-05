@@ -51,7 +51,7 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     // Update performTouch to handle coordinates conversion and multi-touch
     @UiThread
     @ReactMethod
-    fun performTouch(x: Float, y: Float, amount: Int?, spacing: Int?, promise: Promise) {
+    fun performTouch(x: Double, y: Double, amount: Int?, spacing: Int?, promise: Promise) {
         try {
             val service = AutomatorService.getInstance()
             if (service == null) {
@@ -59,7 +59,7 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             }
 
             // Validate required parameters with type checking
-            if (x !in 0f..1f || y !in 0f..1f) {
+            if (x !in 0.0..1.0 || y !in 0.0..1.0) {
                 throw Exception("Invalid coordinates ($x,$y): Must be normalized values between 0 and 1")
             }
 
@@ -68,8 +68,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             val touchSpacing = spacing ?: 0
 
             val size = service.screenSize
-            val screenX = (x * size.width).toFloat()
-            val screenY = (y * size.height).toFloat()
+            val screenX = (x.toFloat() * size.width)
+            val screenY = (y.toFloat() * size.height)
 
             // Capture service initialization status in debug log
             Log.d("AutoMateDebug", 
@@ -87,8 +87,8 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             
             // Create and return pixel location
             val resultMap = Arguments.createMap()
-            resultMap.putDouble("x", screenX)
-            resultMap.putDouble("y", screenY)
+            resultMap.putDouble("x", screenX.toDouble())
+            resultMap.putDouble("y", screenY.toDouble())
             promise.resolve(resultMap)
         } catch (e: Exception) {
             // Add this error mapping
@@ -196,10 +196,10 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
     // Helper function to create response map
     private fun createAppMap(name: String, pkg: String): com.facebook.react.bridge.WritableMap {
-        return Arguments.createMap().apply {
-            putString("appName", name)
-            putString("packageName", pkg)
-        }
+        var map = Arguments.createMap()
+        map.putString("appName", name)
+        map.putString("packageName", pkg)
+        return map
     }
 
     @ReactMethod
