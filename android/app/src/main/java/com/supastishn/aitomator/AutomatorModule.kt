@@ -14,6 +14,9 @@ import android.net.Uri
 import com.facebook.react.module.annotations.ReactModule
 import androidx.annotation.UiThread
 
+import android.os.Handler
+import android.os.Looper
+import android.media.projection.MediaProjection
 // Add these imports at the top of the file
 import android.content.Context
 import android.view.WindowManager
@@ -31,6 +34,14 @@ import android.media.projection.MediaProjectionManager
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
 
     private val context = reactContext
+    private val mMediaProjectionCallback = object : MediaProjection.Callback() {
+        override fun onStop() {
+            Log.i("AutomatorModule", "Media Projection Stopped")
+            MainActivity.mMediaProjection = null
+            val serviceIntent = Intent(reactApplicationContext, ScreenCaptureService::class.java)
+            reactApplicationContext.stopService(serviceIntent)
+        }
+    }
     private var mScreenCapturePromise: Promise? = null
 
     init {
@@ -45,9 +56,12 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         if (requestCode == MainActivity.REQUEST_MEDIA_PROJECTION) {
             if (resultCode == Activity.RESULT_OK && data != null) {
                 MainActivity.mMediaProjection = (reactApplicationContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager).getMediaProjection(resultCode, data)
+                MainActivity.mMediaProjection?.registerCallback(mMediaProjectionCallback, Handler(Looper.getMainLooper()))
                 mScreenCapturePromise?.resolve(true)
             } else {
                 mScreenCapturePromise?.reject("PERMISSION_DENIED", "User denied screen capture permission")
+                val serviceIntent = Intent(reactApplicationContext, ScreenCaptureService::class.java)
+                reactApplicationContext.stopService(serviceIntent)
             }
             mScreenCapturePromise = null
         }
@@ -82,8 +96,9 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
     @ReactMethod
     fun stopScreenCaptureService(promise: Promise) {
         try {
-            val serviceIntent = Intent(reactApplicationContext, ScreenCaptureService::class.java)
-            reactApplicationContext.stopService(serviceIntent)
+            MainActivity.mMediaProjection?.stop()
+            MainActivity.mMediaProjection = null
+            reactApplicationContext.stopService(Intent(reactApplicationContext, ScreenCaptureService::class.java))
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("SERVICE_STOP_ERROR", e.message, e)
