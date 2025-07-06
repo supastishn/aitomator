@@ -25,6 +25,7 @@ const NativeBridge: AutomatorInterface = {
     // Add these explicit assignments:
     searchApps: AutomatorModule.searchApps,
     openApp: AutomatorModule.openApp,
+    typeText: AutomatorModule.typeText,
 
     // Explicitly bind these methods to ensure they're present
     isAccessibilityServiceEnabled: AutomatorModule.isAccessibilityServiceEnabled,
@@ -80,6 +81,14 @@ if (!AutomatorModule.isAccessibilityServiceEnabled) {
             return result;
         }
         throw new Error('isAccessibilityServiceEnabled is not available on AutomatorModule');
+    };
+}
+
+// Add fallback for typeText if it's missing
+if (!NativeBridge.typeText) {
+    // @ts-ignore
+    NativeBridge.typeText = async () => {
+        console.warn("typeText is not available on this platform.");
     };
 }
 
