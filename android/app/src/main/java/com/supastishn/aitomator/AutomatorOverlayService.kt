@@ -76,7 +76,11 @@ class AutomatorOverlayService : Service() {
         val filter = IntentFilter().apply {
             addAction("automation.ACTION_UPDATE_STATUS")
         }
-        registerReceiver(broadcastReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(broadcastReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(broadcastReceiver, filter)
+        }
 
         // REMOVED initial status logic from here.
     }
