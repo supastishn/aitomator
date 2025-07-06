@@ -29,6 +29,10 @@ import android.hardware.display.DisplayManager
 import android.media.ImageReader
 import android.graphics.PixelFormat
 import android.media.projection.MediaProjectionManager
+import com.facebook.react.modules.core.DeviceEventManagerModule
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 @ReactModule(name = "AutomatorModule")
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
@@ -44,9 +48,23 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
         }
     }
     private var mScreenCapturePromise: Promise? = null
+    private val stopRequestReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == "automation.ACTION_STOP") {
+                sendEvent("automationStopRequested", null)
+            }
+        }
+    }
 
     init {
         reactContext.addActivityEventListener(this)
+        val filter = IntentFilter("automation.ACTION_STOP")
+        LocalBroadcastManager.getInstance(reactContext).registerReceiver(stopRequestReceiver, filter)
+    }
+
+    override fun invalidate() {
+        super.invalidate()
+        LocalBroadcastManager.getInstance(reactApplicationContext).unregisterReceiver(stopRequestReceiver)
     }
 
     override fun getName() = "AutomatorModule"

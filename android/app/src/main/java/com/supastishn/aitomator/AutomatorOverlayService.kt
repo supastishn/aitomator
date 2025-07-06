@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Button
 import android.graphics.PixelFormat
 import android.view.Gravity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class AutomatorOverlayService : Service() {
     private lateinit var windowManager: WindowManager
@@ -30,6 +31,14 @@ class AutomatorOverlayService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Get status from the intent that started the service
+        intent?.getStringExtra("status")?.let {
+            statusText.text = it
+        }
+        return START_NOT_STICKY
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -69,11 +78,7 @@ class AutomatorOverlayService : Service() {
         }
         registerReceiver(broadcastReceiver, filter)
 
-        // Set initial status if provided
-        val initialStatus = intent?.getStringExtra("status")
-        if (initialStatus != null) {
-            statusText.text = initialStatus
-        }
+        // REMOVED initial status logic from here.
     }
 
     fun updateStatus(text: String) {
@@ -83,7 +88,7 @@ class AutomatorOverlayService : Service() {
     private fun notifyAutomationStop() {
         // Send broadcast or use callback to notify main app
         val intent = Intent("automation.ACTION_STOP")
-        sendBroadcast(intent)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
     override fun onDestroy() {
