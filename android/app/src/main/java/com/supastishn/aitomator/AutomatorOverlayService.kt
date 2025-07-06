@@ -69,7 +69,7 @@ class AutomatorOverlayService : Service() {
         // Handle stop button click
         stopButton.setOnClickListener {
             notifyAutomationStop()
-            stopSelf()
+            // Do not stopSelf(); overlay lifecycle is now managed by UI layer
         }
 
         // Register broadcast receiver for status updates

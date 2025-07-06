@@ -555,9 +555,6 @@ export async function runAutomationWorkflow(
 ): Promise<void> {
   let currentScreenshot = initialScreenshot;
   try {
-    updateStatus("Showing overlay...");
-    AutomatorModule.showOverlay("Starting automation");
-
     updateStatus("Generating plan...");
     const subtasks = await generatePlan(task, currentScreenshot);
 
@@ -570,9 +567,6 @@ export async function runAutomationWorkflow(
     }
   } catch (err: any) {
     updateStatus(`Automation failed: ${err.message}`);
-    AutomatorModule.hideOverlay();
     throw err;
-  } finally {
-    AutomatorModule.hideOverlay();
   }
 }

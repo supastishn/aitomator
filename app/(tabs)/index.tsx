@@ -39,14 +39,35 @@ export default function HomeScreen() {
     }
   }, [ignoreWarning]);
 
-  // Cleanup overlay on unmount
+  // Show overlay on startup and hide on unmount
   useEffect(() => {
+    const manageOverlay = async () => {
+      if (Platform.OS === 'android') {
+        const hasPermission = await AutomatorModule.hasOverlayPermission();
+        if (hasPermission) {
+          setShowOverlay(true);
+          AutomatorModule.showOverlay('AutoMate Ready');
+        } else {
+          Alert.alert(
+            'Permission Required',
+            'AutoMate needs permission to display over other apps to show a persistent status bar.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => AutomatorModule.requestOverlayPermission() },
+            ]
+          );
+        }
+      }
+    };
+
+    manageOverlay();
+
     return () => {
-      if (showOverlay) {
+      if (Platform.OS === 'android') {
         AutomatorModule.hideOverlay();
       }
     };
-  }, [showOverlay]);
+  }, []);
 
   // Update overlay status when status changes
   useEffect(() => {
@@ -61,11 +82,10 @@ export default function HomeScreen() {
       "automationStopRequested",
       () => {
         setIsRunning(false);
-        setShowOverlay(false);
         setStatus("Stopped by user");
         // If you have a stopAutomation method, call it here
         // AutomatorModule.stopAutomation();
-        AutomatorModule.hideOverlay();
+        // Overlay is now managed by UI lifecycle, do not hide here
       }
     );
 
@@ -86,24 +106,6 @@ export default function HomeScreen() {
       setShowAccessibilityWarning(true);
       return;
     }
-
-    // Request overlay permission
-    if (Platform.OS === 'android') {
-      const hasOverlayPerm = await AutomatorModule.hasOverlayPermission();
-      if (!hasOverlayPerm) {
-        Alert.alert(
-          "Permission Needed",
-          "AutoMate needs display over other apps permission to show automation status",
-          [{ 
-            text: "Grant Permission", 
-            onPress: () => AutomatorModule.requestOverlayPermission()
-          }]
-        );
-      }
-    }
-
-    setShowOverlay(true);
-    AutomatorModule.showOverlay("Starting automation...");
 
     setIsRunning(true);
     setStatus('Starting automation...');
@@ -171,7 +173,6 @@ export default function HomeScreen() {
           console.error("Failed to stop screen capture service", e);
         }
       }
-      AutomatorModule.hideOverlay();
     }
   };
 
