@@ -334,11 +334,11 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
             targetApp?.let { app ->
                 val activityInfo = app.activityInfo
-                var component = android.content.ComponentName(activityInfo.packageName, activityInfo.name)
+                val component = android.content.ComponentName(activityInfo.packageName, activityInfo.name)
                 val launchIntent = Intent(Intent.ACTION_MAIN).apply {
                     addCategory(Intent.CATEGORY_LAUNCHER)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-                    component = component
+                    setComponent(component)
                 }
                 reactApplicationContext.startActivity(launchIntent)
                 promise.resolve(true)
