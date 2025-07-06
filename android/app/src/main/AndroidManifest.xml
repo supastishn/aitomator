@@ -57,5 +57,8 @@
         android:enabled="true"
         android:exported="false"
         android:foregroundServiceType="mediaProjection" />
+    <service
+        android:name=".AutomatorOverlayService"
+        android:exported="false" />
   </application>
 </manifest>
