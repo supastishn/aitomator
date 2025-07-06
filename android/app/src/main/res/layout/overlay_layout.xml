@@ -1,24 +1,16 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:background="#88000000"
-    android:padding="8dp">
+    android:background="@drawable/circle_background">
 
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Automation in progress..."
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"/>
+    <ImageView
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center"
+        android:layout_margin="15dp"
+        android:contentDescription="Stop Automation"
+        android:src="@android:drawable/ic_media_pause"
+        android:tint="@android:color/white"
+        android:tintMode="src_in" />
 
-    <Button
-        android:id="@+id/stopButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="STOP"
-        android:background="#CCFF4444"
-        android:textColor="#FFFFFF"/>
-</LinearLayout>
+</FrameLayout>

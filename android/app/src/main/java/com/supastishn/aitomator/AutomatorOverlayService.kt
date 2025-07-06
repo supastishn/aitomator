@@ -7,8 +7,6 @@ import android.content.BroadcastReceiver
 import android.os.IBinder
 import android.os.Build
 import android.view.*
-import android.widget.TextView
-import android.widget.Button
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.app.Notification
@@ -20,8 +18,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 class AutomatorOverlayService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var overlayView: View
-    private lateinit var statusText: TextView
-    private lateinit var stopButton: Button
 
     companion object {
         private const val OVERLAY_CHANNEL_ID = "automator_overlay_channel"
@@ -32,8 +28,7 @@ class AutomatorOverlayService : Service() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
             when (intent.action) {
                 "automation.ACTION_UPDATE_STATUS" -> {
-                    val status = intent.getStringExtra("status")
-                    statusText.text = status ?: "Processing..."
+                    // Status is now shown in the notification, not the overlay.
                 }
             }
         }
@@ -51,10 +46,6 @@ class AutomatorOverlayService : Service() {
 
         startForeground(OVERLAY_NOTIFICATION_ID, notification)
 
-        // Get status from the intent that started the service
-        intent?.getStringExtra("status")?.let {
-            statusText.text = it
-        }
         return START_NOT_STICKY
     }
 
@@ -74,31 +65,62 @@ class AutomatorOverlayService : Service() {
 
         // Create overlay layout
         overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_layout, null)
-        statusText = overlayView.findViewById(R.id.statusText)
-        stopButton = overlayView.findViewById(R.id.stopButton)
 
         // Set up layout parameters
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
                 WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP
+            gravity = Gravity.TOP or Gravity.START
+            x = 0
+            y = 100 // Initial position
         }
 
         windowManager.addView(overlayView, params)
 
-        // Handle stop button click
-        stopButton.setOnClickListener {
+        // Handle click to stop automation
+        overlayView.setOnClickListener {
             notifyAutomationStop()
-            // Do not stopSelf(); overlay lifecycle is now managed by UI layer
         }
+
+        // Add touch listener to make the overlay draggable
+        overlayView.setOnTouchListener(object : View.OnTouchListener {
+            private var initialX = 0
+            private var initialY = 0
+            private var initialTouchX = 0f
+            private var initialTouchY = 0f
+
+            override fun onTouch(v: View, event: MotionEvent): Boolean {
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        initialX = params.x
+                        initialY = params.y
+                        initialTouchX = event.rawX
+                        initialTouchY = event.rawY
+                        return true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        params.x = initialX + (event.rawX - initialTouchX).toInt()
+                        params.y = initialY + (event.rawY - initialTouchY).toInt()
+                        windowManager.updateViewLayout(overlayView, params)
+                        return true
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        if (kotlin.math.abs(event.rawX - initialTouchX) < 5 && kotlin.math.abs(event.rawY - initialTouchY) < 5) {
+                            v.performClick()
+                        }
+                        return true
+                    }
+                }
+                return false
+            }
+        })
 
         // Register broadcast receiver for status updates
         val filter = IntentFilter().apply {
@@ -111,10 +133,6 @@ class AutomatorOverlayService : Service() {
         }
 
         // REMOVED initial status logic from here.
-    }
-
-    fun updateStatus(text: String) {
-        statusText.text = text
     }
 
     private fun notifyAutomationStop() {
