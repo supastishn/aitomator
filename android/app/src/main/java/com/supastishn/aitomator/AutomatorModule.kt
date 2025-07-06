@@ -34,6 +34,7 @@ import android.media.projection.MediaProjectionManager
 class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
 
     private val context = reactContext
+    private var overlayServiceIntent: Intent? = null
     private val mMediaProjectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
             Log.i("AutomatorModule", "Media Projection Stopped")
@@ -102,6 +103,67 @@ class AutomatorModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("SERVICE_STOP_ERROR", e.message, e)
+        }
+    }
+
+    // Overlay permission check
+    @ReactMethod
+    fun hasOverlayPermission(promise: Promise) {
+        try {
+            val canDraw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                android.provider.Settings.canDrawOverlays(reactApplicationContext)
+            } else {
+                true
+            }
+            promise.resolve(canDraw)
+        } catch (e: Exception) {
+            promise.reject("OVERLAY_PERMISSION_ERROR", e.message)
+        }
+    }
+
+    @ReactMethod
+    fun requestOverlayPermission(promise: Promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val intent = Intent(
+                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + reactApplicationContext.packageName)
+                )
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                reactApplicationContext.startActivity(intent)
+            }
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("OVERLAY_PERMISSION_REQUEST_ERROR", e.message)
+        }
+    }
+
+    @ReactMethod
+    fun showOverlay(status: String) {
+        val context = reactApplicationContext
+        overlayServiceIntent = Intent(context, AutomatorOverlayService::class.java).apply {
+            putExtra("status", status)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(overlayServiceIntent)
+        } else {
+            context.startService(overlayServiceIntent)
+        }
+    }
+
+    @ReactMethod
+    fun updateOverlayStatus(status: String) {
+        val intent = Intent("automation.ACTION_UPDATE_STATUS").apply {
+            putExtra("status", status)
+        }
+        reactApplicationContext.sendBroadcast(intent)
+    }
+
+    @ReactMethod
+    fun hideOverlay() {
+        overlayServiceIntent?.let {
+            reactApplicationContext.stopService(it)
         }
     }
 

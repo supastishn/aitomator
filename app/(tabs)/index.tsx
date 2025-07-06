@@ -15,7 +15,7 @@ import AutomatorModule from '@/lib/native';
 import { useState, useEffect } from 'react';
 import useAccessibilityCheck from '@/hooks/useAccessibilityCheck';
 import { runAutomationWorkflow } from '@/services/aiProcessor';
-import { Modal } from 'react-native';
+import { Modal, DeviceEventEmitter } from 'react-native';
 
 export default function HomeScreen() {
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
@@ -24,6 +24,7 @@ export default function HomeScreen() {
   const [isRunning, setIsRunning] = useState(false);
   const [showAccessibilityWarning, setShowAccessibilityWarning] = useState(false);
   const [ignoreWarning, setIgnoreWarning] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   // Accessibility hook setup
   const { 
@@ -37,6 +38,39 @@ export default function HomeScreen() {
       startAutomationAfterCheck();
     }
   }, [ignoreWarning]);
+
+  // Cleanup overlay on unmount
+  useEffect(() => {
+    return () => {
+      if (showOverlay) {
+        AutomatorModule.hideOverlay();
+      }
+    };
+  }, [showOverlay]);
+
+  // Update overlay status when status changes
+  useEffect(() => {
+    if (showOverlay && status) {
+      AutomatorModule.updateOverlayStatus(status);
+    }
+  }, [status, showOverlay]);
+
+  // Handle stop from overlay
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      "automationStopRequested",
+      () => {
+        setIsRunning(false);
+        setShowOverlay(false);
+        setStatus("Stopped by user");
+        // If you have a stopAutomation method, call it here
+        // AutomatorModule.stopAutomation();
+        AutomatorModule.hideOverlay();
+      }
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   const openAccessibilitySettings = () => {
     if (Platform.OS === 'android') {
@@ -52,6 +86,24 @@ export default function HomeScreen() {
       setShowAccessibilityWarning(true);
       return;
     }
+
+    // Request overlay permission
+    if (Platform.OS === 'android') {
+      const hasOverlayPerm = await AutomatorModule.hasOverlayPermission();
+      if (!hasOverlayPerm) {
+        Alert.alert(
+          "Permission Needed",
+          "AutoMate needs display over other apps permission to show automation status",
+          [{ 
+            text: "Grant Permission", 
+            onPress: () => AutomatorModule.requestOverlayPermission()
+          }]
+        );
+      }
+    }
+
+    setShowOverlay(true);
+    AutomatorModule.showOverlay("Starting automation...");
 
     setIsRunning(true);
     setStatus('Starting automation...');
@@ -119,6 +171,7 @@ export default function HomeScreen() {
           console.error("Failed to stop screen capture service", e);
         }
       }
+      AutomatorModule.hideOverlay();
     }
   };
 

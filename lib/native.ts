@@ -17,6 +17,12 @@ interface AutomatorInterface extends NativeModule {
     takeScreenshot: () => Promise<string>;
     getScreenDimensions: () => Promise<{ width: number; height: number }>;
     stopScreenCaptureService: () => Promise<void>;
+    // Overlay methods
+    hasOverlayPermission: () => Promise<boolean>;
+    requestOverlayPermission: () => Promise<boolean>;
+    showOverlay: (status: string) => void;
+    updateOverlayStatus: (status: string) => void;
+    hideOverlay: () => void;
 }
 
 // Add proper error handling for native commands
@@ -55,6 +61,11 @@ const NativeBridge: AutomatorInterface = {
     },
     stopScreenCaptureService: AutomatorModule.stopScreenCaptureService,
     // You can add similar wrappers for other methods as needed
+    hasOverlayPermission: AutomatorModule.hasOverlayPermission,
+    requestOverlayPermission: AutomatorModule.requestOverlayPermission,
+    showOverlay: AutomatorModule.showOverlay,
+    updateOverlayStatus: AutomatorModule.updateOverlayStatus,
+    hideOverlay: AutomatorModule.hideOverlay,
 };
 
 if (!NativeBridge.searchApps) {
